@@ -8,15 +8,15 @@
     </header>
 
     <nav class="tabs" role="tablist" aria-label="FrodoKEM exhibits">
-      <button class="tab ${r.activeTab===`lwe`?`active`:``}" data-tab="lwe" role="tab">1. LWE Problem</button>
-      <button class="tab ${r.activeTab===`keygen`?`active`:``}" data-tab="keygen" role="tab">2. Key Generation</button>
-      <button class="tab ${r.activeTab===`kem`?`active`:``}" data-tab="kem" role="tab">3. Encap / Decap</button>
-      <button class="tab ${r.activeTab===`compare`?`active`:``}" data-tab="compare" role="tab">4. Frodo vs ML-KEM</button>
-      <button class="tab ${r.activeTab===`errors`?`active`:``}" data-tab="errors" role="tab">5. Error Distribution</button>
-      <button class="tab ${r.activeTab===`landscape`?`active`:``}" data-tab="landscape" role="tab">6. PQ Landscape</button>
+      <button class="tab ${r.activeTab===`lwe`?`active`:``}" data-tab="lwe" role="tab" id="tab-lwe" aria-selected="${r.activeTab===`lwe`}" aria-controls="panel-lwe">1. LWE Problem</button>
+      <button class="tab ${r.activeTab===`keygen`?`active`:``}" data-tab="keygen" role="tab" id="tab-keygen" aria-selected="${r.activeTab===`keygen`}" aria-controls="panel-keygen">2. Key Generation</button>
+      <button class="tab ${r.activeTab===`kem`?`active`:``}" data-tab="kem" role="tab" id="tab-kem" aria-selected="${r.activeTab===`kem`}" aria-controls="panel-kem">3. Encap / Decap</button>
+      <button class="tab ${r.activeTab===`compare`?`active`:``}" data-tab="compare" role="tab" id="tab-compare" aria-selected="${r.activeTab===`compare`}" aria-controls="panel-compare">4. Frodo vs ML-KEM</button>
+      <button class="tab ${r.activeTab===`errors`?`active`:``}" data-tab="errors" role="tab" id="tab-errors" aria-selected="${r.activeTab===`errors`}" aria-controls="panel-errors">5. Error Distribution</button>
+      <button class="tab ${r.activeTab===`landscape`?`active`:``}" data-tab="landscape" role="tab" id="tab-landscape" aria-selected="${r.activeTab===`landscape`}" aria-controls="panel-landscape">6. PQ Landscape</button>
     </nav>
 
-    <section class="panel ${r.activeTab===`lwe`?`visible`:``}" id="panel-lwe">
+    <section class="panel ${r.activeTab===`lwe`?`visible`:``}" id="panel-lwe" role="tabpanel" aria-labelledby="tab-lwe" ${r.activeTab===`lwe`?``:`hidden`}>
       <article class="card">
         <h2>Learning With Errors (LWE) from first principles</h2>
         <p>LWE was introduced by Regev (2005). Given noisy linear equations over Z<sub>q</sub>, recover secret vector s.</p>
@@ -29,10 +29,13 @@
         <div>
           <h3>Interactive toy LWE demo</h3>
           <div class="controls">
-            <label>s =</label>
-            <input id="s0" type="number" min="0" max="96" value="${r.lweSecret[0]}" />
-            <input id="s1" type="number" min="0" max="96" value="${r.lweSecret[1]}" />
-            <input id="s2" type="number" min="0" max="96" value="${r.lweSecret[2]}" />
+            <span>s =</span>
+            <label class="sr-only" for="s0">Secret s[0]</label>
+            <input id="s0" type="number" min="0" max="96" value="${r.lweSecret[0]}" aria-label="Secret s[0]" />
+            <label class="sr-only" for="s1">Secret s[1]</label>
+            <input id="s1" type="number" min="0" max="96" value="${r.lweSecret[1]}" aria-label="Secret s[1]" />
+            <label class="sr-only" for="s2">Secret s[2]</label>
+            <input id="s2" type="number" min="0" max="96" value="${r.lweSecret[2]}" aria-label="Secret s[2]" />
           </div>
           <div class="controls">
             <button id="rand-secret">Random secret</button>
@@ -40,7 +43,7 @@
             <button id="solve-clean">Solve without noise</button>
             <button id="solve-noisy">Solve with noise</button>
           </div>
-          <p>${r.lweOutcome}</p>
+          <p role="status" aria-live="polite">${r.lweOutcome}</p>
         </div>
         <div>
           <h3>Ring-LWE vs plain LWE</h3>
@@ -56,7 +59,8 @@
       <article class="card table-wrap">
         <h3>Generated samples (a, b)</h3>
         <table>
-          <thead><tr><th>#</th><th>a</th><th>b</th><th>error e</th></tr></thead>
+          <caption class="sr-only">LWE sample equations</caption>
+          <thead><tr><th scope="col">#</th><th scope="col">a</th><th scope="col">b</th><th scope="col">error e</th></tr></thead>
           <tbody>
             ${r.lweSamples.map((e,t)=>`<tr><td>${t+1}</td><td>[${e.a.join(`, `)}]</td><td>${e.b}</td><td>${e.e}</td></tr>`).join(``)}
           </tbody>
@@ -68,7 +72,7 @@
       </article>
     </section>
 
-    <section class="panel ${r.activeTab===`keygen`?`visible`:``}" id="panel-keygen">
+    <section class="panel ${r.activeTab===`keygen`?`visible`:``}" id="panel-keygen" role="tabpanel" aria-labelledby="tab-keygen" ${r.activeTab===`keygen`?``:`hidden`}>
       <article class="card">
         <h2>FrodoKEM key generation</h2>
         <p>Conceptual flow: seed → expand A (SHAKE-128), sample S and E from noise distribution, compute B = A·S + E mod q, publish (seed<sub>A</sub>, B).</p>
@@ -89,7 +93,8 @@
           <h3>Real FrodoKEM sizes</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Set</th><th>Public key</th><th>Private key</th><th>Security</th></tr></thead>
+              <caption class="sr-only">FrodoKEM parameter sizes</caption>
+              <thead><tr><th scope="col">Set</th><th scope="col">Public key</th><th scope="col">Private key</th><th scope="col">Security</th></tr></thead>
               <tbody>
                 <tr><td>FrodoKEM-640</td><td>9,616 bytes</td><td>19,888 bytes</td><td>~103-bit PQ</td></tr>
                 <tr><td>FrodoKEM-976</td><td>15,632 bytes</td><td>31,296 bytes</td><td>~150-bit PQ</td></tr>
@@ -123,7 +128,7 @@
       </article>
     </section>
 
-    <section class="panel ${r.activeTab===`kem`?`visible`:``}" id="panel-kem">
+    <section class="panel ${r.activeTab===`kem`?`visible`:``}" id="panel-kem" role="tabpanel" aria-labelledby="tab-kem" ${r.activeTab===`kem`?``:`hidden`}>
       <article class="card">
         <h2>Encapsulation and decapsulation</h2>
         <p>Conceptual encapsulation: sample S′, E′, E″, compute B′ = A·S′ + E′ and V = B·S′ + E″, encode message, output ciphertext (B′, C), derive shared secret via KDF.</p>
@@ -134,7 +139,7 @@
           <button id="kem-decap">Alice decapsulates</button>
           <button id="kem-tamper">Tamper with ciphertext</button>
         </div>
-        <p>${r.kemStatus}</p>
+        <p role="status" aria-live="polite">${r.kemStatus}</p>
       </article>
 
       <article class="card grid-two">
@@ -150,7 +155,8 @@
         <div>
           <h3>Real ciphertext sizes</h3>
           <table>
-            <thead><tr><th>Parameter set</th><th>Ciphertext</th></tr></thead>
+            <caption class="sr-only">FrodoKEM ciphertext sizes</caption>
+            <thead><tr><th scope="col">Parameter set</th><th scope="col">Ciphertext</th></tr></thead>
             <tbody>
               <tr><td>FrodoKEM-640</td><td>9,720 bytes</td></tr>
               <tr><td>FrodoKEM-976</td><td>15,744 bytes</td></tr>
@@ -166,18 +172,19 @@
       </article>
     </section>
 
-    <section class="panel ${r.activeTab===`compare`?`visible`:``}" id="panel-compare">
+    <section class="panel ${r.activeTab===`compare`?`visible`:``}" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" ${r.activeTab===`compare`?``:`hidden`}>
       <article class="card">
         <h2>FrodoKEM vs ML-KEM: conservative choice</h2>
         <p>Run a side-by-side operation simulation to compare practical timing shape with published size and security properties.</p>
         <button id="run-compare">Run side-by-side operation</button>
-        <p>${r.compareBench}</p>
+        <p role="status" aria-live="polite">${r.compareBench}</p>
       </article>
 
       <article class="card table-wrap">
         <table>
+          <caption class="sr-only">FrodoKEM-976 vs ML-KEM-768 comparison</caption>
           <thead>
-            <tr><th>Property</th><th>FrodoKEM-976</th><th>ML-KEM-768</th></tr>
+            <tr><th scope="col">Property</th><th scope="col">FrodoKEM-976</th><th scope="col">ML-KEM-768</th></tr>
           </thead>
           <tbody>
             <tr><td>Hardness assumption</td><td>Plain LWE</td><td>Module-LWE (ring)</td></tr>
@@ -211,7 +218,7 @@
       </article>
     </section>
 
-    <section class="panel ${r.activeTab===`errors`?`visible`:``}" id="panel-errors">
+    <section class="panel ${r.activeTab===`errors`?`visible`:``}" id="panel-errors" role="tabpanel" aria-labelledby="tab-errors" ${r.activeTab===`errors`?``:`hidden`}>
       <article class="card">
         <h2>Error distribution: where security lives</h2>
         <p>FrodoKEM uses discrete table-sampled errors approximating Gaussian behavior. Errors must be random enough for security and small enough for correctness.</p>
@@ -219,21 +226,22 @@
           <button id="sample-errors">Sample 1000 errors</button>
           <button id="run-failure">Run toy decryption failure</button>
         </div>
-        <p>${r.errorSummary}</p>
-        <p>${r.failureSummary}</p>
+        <p role="status" aria-live="polite">${r.errorSummary}</p>
+        <p role="status" aria-live="polite">${r.failureSummary}</p>
       </article>
 
       <article class="card grid-two">
         <div>
           <h3>Histogram (selected: ${i.label})</h3>
-          <div class="histogram">
+          <div class="histogram" role="img" aria-label="Error distribution histogram for ${i.label}, showing sampled counts per error value">
             ${r.errorHistogram.map(e=>`<div class="hist-row"><span>${e.value}</span><div class="hist-track"><div class="hist-fill" style="--w:${e.count/c*100}%;"></div></div><span>${e.count}</span></div>`).join(``)}
           </div>
         </div>
         <div>
           <h3>Error comparison table</h3>
           <table>
-            <thead><tr><th>Scheme</th><th>Error type</th><th>σ</th><th>Max error</th></tr></thead>
+            <caption class="sr-only">Error distribution comparison by scheme</caption>
+            <thead><tr><th scope="col">Scheme</th><th scope="col">Error type</th><th scope="col">σ</th><th scope="col">Max error</th></tr></thead>
             <tbody>
               <tr><td>FrodoKEM-640</td><td>Discrete, table-sampled</td><td>2.8</td><td>±12</td></tr>
               <tr><td>FrodoKEM-976</td><td>Discrete, table-sampled</td><td>2.3</td><td>±10</td></tr>
@@ -249,12 +257,13 @@
       </article>
     </section>
 
-    <section class="panel ${r.activeTab===`landscape`?`visible`:``}" id="panel-landscape">
+    <section class="panel ${r.activeTab===`landscape`?`visible`:``}" id="panel-landscape" role="tabpanel" aria-labelledby="tab-landscape" ${r.activeTab===`landscape`?``:`hidden`}>
       <article class="card">
         <h2>FrodoKEM in the PQ KEM landscape</h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>KEM</th><th>Basis</th><th>NIST status</th><th>Key size</th><th>Speed</th></tr></thead>
+            <caption class="sr-only">Post-quantum KEM landscape comparison</caption>
+            <thead><tr><th scope="col">KEM</th><th scope="col">Basis</th><th scope="col">NIST status</th><th scope="col">Key size</th><th scope="col">Speed</th></tr></thead>
             <tbody>
               <tr><td>ML-KEM</td><td>Module-LWE</td><td>FIPS 203 (2024)</td><td>~1KB</td><td>Fast</td></tr>
               <tr><td>FrodoKEM</td><td>Plain LWE</td><td>Round 4 alternate</td><td>~15KB</td><td>Slower</td></tr>
@@ -291,5 +300,5 @@
       </article>
     </section>
   </main>
-  `,n.querySelectorAll(`[data-tab]`).forEach(e=>{e.addEventListener(`click`,()=>{r.activeTab=e.dataset.tab,T()})});let x=n.querySelector(`#theme-toggle`);x&&x.addEventListener(`click`,()=>{let e=g()===`dark`?`light`:`dark`;_(e);let t=v(e);x.textContent=t.icon,x.setAttribute(`aria-label`,t.label)}),n.querySelector(`#rand-secret`)?.addEventListener(`click`,()=>{r.lweSecret=[o(0,96),o(0,96),o(0,96)],r.lweOutcome=`Secret randomized to [${r.lweSecret.join(`, `)}].`,r.lweSamples=[],T()}),n.querySelector(`#gen-samples`)?.addEventListener(`click`,()=>{let e=Number((n.querySelector(`#s0`)?.value??`0`).trim()),t=Number((n.querySelector(`#s1`)?.value??`0`).trim()),i=Number((n.querySelector(`#s2`)?.value??`0`).trim());r.lweSecret=[s(e,97),s(t,97),s(i,97)],r.lweSamples=d(r.lweSecret,!0),r.lweCleanSamples=d(r.lweSecret,!1),r.lweOutcome=`Generated 5 noisy samples and 3 noiseless equations from the selected secret.`,T()}),n.querySelector(`#solve-clean`)?.addEventListener(`click`,()=>{if(r.lweCleanSamples.length<3){r.lweOutcome=`Generate samples first.`,T();return}let e=l(r.lweCleanSamples);r.lweOutcome=e?`Without noise, Gaussian elimination recovers s = [${e.join(`, `)}] exactly.`:`Noiseless system was singular; generate new samples.`,T()}),n.querySelector(`#solve-noisy`)?.addEventListener(`click`,()=>{if(r.lweSamples.length<3){r.lweOutcome=`Generate noisy samples first.`,T();return}let e=l(r.lweSamples.slice(0,3));if(!e){r.lweOutcome=`Noisy system was singular; regenerate samples.`,T();return}let t=r.lweSamples.map(t=>s(u(t.a,e,97)-t.b,97));r.lweOutcome=t.some(e=>e!==0)?`With noise, equations become inconsistent. Candidate s = [${e.join(`, `)}], residuals = [${t.join(`, `)}].`:`This sample happened to fit exactly. Try again; noise usually breaks exact solving.`,T()});let E=n.querySelector(`#param-select`);E?.addEventListener(`change`,()=>{r.selectedParam=E.value,T()}),n.querySelector(`#run-keygen`)?.addEventListener(`click`,()=>{let t=e[r.selectedParam],n=performance.now(),i=f(t.publicKey),a=f(t.privateKey);r.keygenMs=performance.now()-n,r.keygenPreview=p(i,64),r.keygenSkSize=a.length,r.keygenRatio=`${t.label} public key (${t.publicKey} bytes) is ${(t.publicKey/1184).toFixed(1)}x ML-KEM-768.`,T()}),n.querySelector(`#kem-gen`)?.addEventListener(`click`,()=>{r.aliceSeed=f(32),r.kemCiphertext=null,r.kemBobSecret=null,r.kemAliceSecret=null,r.kemStatus=`Alice keypair generated. Bob can encapsulate now.`,T()}),n.querySelector(`#kem-encap`)?.addEventListener(`click`,async()=>{if(!r.aliceSeed){r.kemStatus=`Generate Alice keypair first.`,T();return}let t=e[r.selectedParam],n=performance.now(),i=f(t.ciphertext),a=await m(h(r.aliceSeed,i));r.kemEncapMs=performance.now()-n,r.kemCiphertext=i,r.kemBobSecret=a,r.kemAliceSecret=null,r.kemStatus=`Bob encapsulated using ${t.label}. Ciphertext size = ${t.ciphertext} bytes.`,T()}),n.querySelector(`#kem-decap`)?.addEventListener(`click`,async()=>{if(!r.aliceSeed||!r.kemCiphertext){r.kemStatus=`Encapsulate first.`,T();return}let e=performance.now();r.kemAliceSecret=await m(h(r.aliceSeed,r.kemCiphertext)),r.kemDecapMs=performance.now()-e,r.kemStatus=`Alice decapsulated and derived a shared secret.`,T()}),n.querySelector(`#kem-tamper`)?.addEventListener(`click`,()=>{if(!r.kemCiphertext){r.kemStatus=`No ciphertext to tamper.`,T();return}let e=a(r.kemCiphertext.length);r.kemCiphertext[e]=r.kemCiphertext[e]^1,r.kemStatus=`Tampered ciphertext byte at index ${e}. Next decapsulation should mismatch.`,T()}),n.querySelector(`#run-compare`)?.addEventListener(`click`,()=>{r.compareRows.frodo.keygen=y(26e4),r.compareRows.frodo.encaps=y(22e4),r.compareRows.frodo.decaps=y(23e4),r.compareRows.mlkem.keygen=y(22e3),r.compareRows.mlkem.encaps=y(18e3),r.compareRows.mlkem.decaps=y(19e3),r.compareBench=`Side-by-side operation complete. Frodo path is intentionally heavier than ML-KEM path.`,T()}),n.querySelector(`#sample-errors`)?.addEventListener(`click`,()=>{let t=e[r.selectedParam];r.errorHistogram=S(t),r.errorSummary=`Sampled 1000 errors for ${t.label}. Distribution is centered near 0 with thin tails.`,T()}),n.querySelector(`#run-failure`)?.addEventListener(`click`,()=>{r.failureSummary=C(),T()})}r.lweSamples=d(r.lweSecret,!0),r.lweCleanSamples=d(r.lweSecret,!1),T();
-//# sourceMappingURL=index-CN7FpFeP.js.map
+  `,n.querySelectorAll(`[data-tab]`).forEach(e=>{e.addEventListener(`click`,()=>{r.activeTab=e.dataset.tab,T()})});let x=Array.from(n.querySelectorAll(`[role="tab"]`));x.forEach((e,t)=>{e.setAttribute(`tabindex`,e.classList.contains(`active`)?`0`:`-1`),e.addEventListener(`keydown`,e=>{let n=-1;e.key===`ArrowRight`||e.key===`ArrowDown`?n=(t+1)%x.length:e.key===`ArrowLeft`||e.key===`ArrowUp`?n=(t-1+x.length)%x.length:e.key===`Home`?n=0:e.key===`End`&&(n=x.length-1),n>=0&&(e.preventDefault(),x[n].focus(),x[n].click())})});let E=n.querySelector(`#theme-toggle`);E&&E.addEventListener(`click`,()=>{let e=g()===`dark`?`light`:`dark`;_(e);let t=v(e);E.textContent=t.icon,E.setAttribute(`aria-label`,t.label)}),n.querySelector(`#rand-secret`)?.addEventListener(`click`,()=>{r.lweSecret=[o(0,96),o(0,96),o(0,96)],r.lweOutcome=`Secret randomized to [${r.lweSecret.join(`, `)}].`,r.lweSamples=[],T()}),n.querySelector(`#gen-samples`)?.addEventListener(`click`,()=>{let e=Number((n.querySelector(`#s0`)?.value??`0`).trim()),t=Number((n.querySelector(`#s1`)?.value??`0`).trim()),i=Number((n.querySelector(`#s2`)?.value??`0`).trim());r.lweSecret=[s(e,97),s(t,97),s(i,97)],r.lweSamples=d(r.lweSecret,!0),r.lweCleanSamples=d(r.lweSecret,!1),r.lweOutcome=`Generated 5 noisy samples and 3 noiseless equations from the selected secret.`,T()}),n.querySelector(`#solve-clean`)?.addEventListener(`click`,()=>{if(r.lweCleanSamples.length<3){r.lweOutcome=`Generate samples first.`,T();return}let e=l(r.lweCleanSamples);r.lweOutcome=e?`Without noise, Gaussian elimination recovers s = [${e.join(`, `)}] exactly.`:`Noiseless system was singular; generate new samples.`,T()}),n.querySelector(`#solve-noisy`)?.addEventListener(`click`,()=>{if(r.lweSamples.length<3){r.lweOutcome=`Generate noisy samples first.`,T();return}let e=l(r.lweSamples.slice(0,3));if(!e){r.lweOutcome=`Noisy system was singular; regenerate samples.`,T();return}let t=r.lweSamples.map(t=>s(u(t.a,e,97)-t.b,97));r.lweOutcome=t.some(e=>e!==0)?`With noise, equations become inconsistent. Candidate s = [${e.join(`, `)}], residuals = [${t.join(`, `)}].`:`This sample happened to fit exactly. Try again; noise usually breaks exact solving.`,T()});let D=n.querySelector(`#param-select`);D?.addEventListener(`change`,()=>{r.selectedParam=D.value,T()}),n.querySelector(`#run-keygen`)?.addEventListener(`click`,()=>{let t=e[r.selectedParam],n=performance.now(),i=f(t.publicKey),a=f(t.privateKey);r.keygenMs=performance.now()-n,r.keygenPreview=p(i,64),r.keygenSkSize=a.length,r.keygenRatio=`${t.label} public key (${t.publicKey} bytes) is ${(t.publicKey/1184).toFixed(1)}x ML-KEM-768.`,T()}),n.querySelector(`#kem-gen`)?.addEventListener(`click`,()=>{r.aliceSeed=f(32),r.kemCiphertext=null,r.kemBobSecret=null,r.kemAliceSecret=null,r.kemStatus=`Alice keypair generated. Bob can encapsulate now.`,T()}),n.querySelector(`#kem-encap`)?.addEventListener(`click`,async()=>{if(!r.aliceSeed){r.kemStatus=`Generate Alice keypair first.`,T();return}let t=e[r.selectedParam],n=performance.now(),i=f(t.ciphertext),a=await m(h(r.aliceSeed,i));r.kemEncapMs=performance.now()-n,r.kemCiphertext=i,r.kemBobSecret=a,r.kemAliceSecret=null,r.kemStatus=`Bob encapsulated using ${t.label}. Ciphertext size = ${t.ciphertext} bytes.`,T()}),n.querySelector(`#kem-decap`)?.addEventListener(`click`,async()=>{if(!r.aliceSeed||!r.kemCiphertext){r.kemStatus=`Encapsulate first.`,T();return}let e=performance.now();r.kemAliceSecret=await m(h(r.aliceSeed,r.kemCiphertext)),r.kemDecapMs=performance.now()-e,r.kemStatus=`Alice decapsulated and derived a shared secret.`,T()}),n.querySelector(`#kem-tamper`)?.addEventListener(`click`,()=>{if(!r.kemCiphertext){r.kemStatus=`No ciphertext to tamper.`,T();return}let e=a(r.kemCiphertext.length);r.kemCiphertext[e]=r.kemCiphertext[e]^1,r.kemStatus=`Tampered ciphertext byte at index ${e}. Next decapsulation should mismatch.`,T()}),n.querySelector(`#run-compare`)?.addEventListener(`click`,()=>{r.compareRows.frodo.keygen=y(26e4),r.compareRows.frodo.encaps=y(22e4),r.compareRows.frodo.decaps=y(23e4),r.compareRows.mlkem.keygen=y(22e3),r.compareRows.mlkem.encaps=y(18e3),r.compareRows.mlkem.decaps=y(19e3),r.compareBench=`Side-by-side operation complete. Frodo path is intentionally heavier than ML-KEM path.`,T()}),n.querySelector(`#sample-errors`)?.addEventListener(`click`,()=>{let t=e[r.selectedParam];r.errorHistogram=S(t),r.errorSummary=`Sampled 1000 errors for ${t.label}. Distribution is centered near 0 with thin tails.`,T()}),n.querySelector(`#run-failure`)?.addEventListener(`click`,()=>{r.failureSummary=C(),T()})}r.lweSamples=d(r.lweSecret,!0),r.lweCleanSamples=d(r.lweSecret,!1),T();
+//# sourceMappingURL=index-DG149Fcf.js.map
