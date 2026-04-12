@@ -62,7 +62,7 @@ const FRODO: Record<FrodoId, FrodoParams> = {
     privateKey: 43088,
     ciphertext: 21632,
     sigma: 1.4,
-    maxError: 8,
+    maxError: 6,
   },
 };
 
@@ -267,20 +267,20 @@ function generateHistogram(param: FrodoParams): Array<{ value: number; count: nu
 
 function runFailureDemo(): string {
   const q = 17;
+  const half = Math.floor(q / 2); // 8
   let tries = 0;
   while (tries < 25) {
     tries += 1;
     const m = randomInt(2);
-    const base = randomFromRange(0, q - 1);
     const accumulatedError = randomFromRange(-6, 6);
-    const noisy = mod(base + (m === 1 ? 8 : 0) + accumulatedError, q);
+    const noisy = mod(m * half + accumulatedError, q);
 
-    const dist0 = Math.min(mod(noisy - 0, q), mod(0 - noisy, q));
-    const dist1 = Math.min(mod(noisy - 8, q), mod(8 - noisy, q));
+    const dist0 = Math.min(mod(noisy, q), mod(-noisy, q));
+    const dist1 = Math.min(mod(noisy - half, q), mod(half - noisy, q));
     const recovered = dist1 < dist0 ? 1 : 0;
 
     if (recovered !== m) {
-      return `Toy failure observed: message=${m}, encoded=${noisy} mod 17, accumulated error=${accumulatedError}, recovered=${recovered}. Oversized errors break correctness.`;
+      return `Toy failure observed: message=${m}, encoded=${noisy} mod ${q}, accumulated error=${accumulatedError}, recovered=${recovered}. Oversized errors break correctness.`;
     }
   }
   return 'No failure occurred in 25 tries. Re-run: oversized errors still cause frequent failures at toy scale.';
@@ -672,9 +672,9 @@ function render(): void {
 
   const genSamples = appRoot.querySelector<HTMLButtonElement>('#gen-samples');
   genSamples?.addEventListener('click', () => {
-    const s0 = Number((appRoot.querySelector<HTMLInputElement>('#s0')?.value ?? '0').trim());
-    const s1 = Number((appRoot.querySelector<HTMLInputElement>('#s1')?.value ?? '0').trim());
-    const s2 = Number((appRoot.querySelector<HTMLInputElement>('#s2')?.value ?? '0').trim());
+    const s0 = parseInt(appRoot.querySelector<HTMLInputElement>('#s0')?.value ?? '0', 10) || 0;
+    const s1 = parseInt(appRoot.querySelector<HTMLInputElement>('#s1')?.value ?? '0', 10) || 0;
+    const s2 = parseInt(appRoot.querySelector<HTMLInputElement>('#s2')?.value ?? '0', 10) || 0;
     state.lweSecret = [mod(s0, 97), mod(s1, 97), mod(s2, 97)];
     state.lweSamples = buildToyLweSamples(state.lweSecret, true);
     state.lweCleanSamples = buildToyLweSamples(state.lweSecret, false);
@@ -742,6 +742,8 @@ function render(): void {
     state.kemCiphertext = null;
     state.kemBobSecret = null;
     state.kemAliceSecret = null;
+    state.kemEncapMs = 0;
+    state.kemDecapMs = 0;
     state.kemStatus = 'Alice keypair generated. Bob can encapsulate now.';
     render();
   });
