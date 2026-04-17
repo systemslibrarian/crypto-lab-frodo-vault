@@ -896,16 +896,20 @@ function render(): void {
       render();
       return;
     }
-    const p = FRODO[state.selectedParam];
-    const start = performance.now();
-    const ct = randomBytes(p.ciphertext);
-    const secret = await sha256(concat(state.aliceSeed, ct));
-    state.kemEncapMs = performance.now() - start;
-    state.kemCiphertext = ct;
-    state.kemBobSecret = secret;
-    state.kemAliceSecret = null;
-    state.kemPreTamperCt = null;
-    state.kemStatus = `Bob encapsulated using ${p.label}. Ciphertext size = ${p.ciphertext} bytes.`;
+    try {
+      const p = FRODO[state.selectedParam];
+      const start = performance.now();
+      const ct = randomBytes(p.ciphertext);
+      const secret = await sha256(concat(state.aliceSeed, ct));
+      state.kemEncapMs = performance.now() - start;
+      state.kemCiphertext = ct;
+      state.kemBobSecret = secret;
+      state.kemAliceSecret = null;
+      state.kemPreTamperCt = null;
+      state.kemStatus = `Bob encapsulated using ${p.label}. Ciphertext size = ${p.ciphertext} bytes.`;
+    } catch {
+      state.kemStatus = 'Encapsulation failed — crypto.subtle may be unavailable (requires HTTPS).';
+    }
     render();
   });
 
@@ -916,10 +920,14 @@ function render(): void {
       render();
       return;
     }
-    const start = performance.now();
-    state.kemAliceSecret = await sha256(concat(state.aliceSeed, state.kemCiphertext));
-    state.kemDecapMs = performance.now() - start;
-    state.kemStatus = 'Alice decapsulated and derived a shared secret.';
+    try {
+      const start = performance.now();
+      state.kemAliceSecret = await sha256(concat(state.aliceSeed, state.kemCiphertext));
+      state.kemDecapMs = performance.now() - start;
+      state.kemStatus = 'Alice decapsulated and derived a shared secret.';
+    } catch {
+      state.kemStatus = 'Decapsulation failed — crypto.subtle may be unavailable (requires HTTPS).';
+    }
     render();
   });
 
@@ -955,10 +963,14 @@ function render(): void {
 
   const runHybrid = appRoot.querySelector<HTMLButtonElement>('#run-hybrid');
   runHybrid?.addEventListener('click', async () => {
-    state.hybridMlkemSS = randomBytes(32);
-    state.hybridFrodoSS = randomBytes(24);
-    state.hybridCombinedSS = await sha256(concat(state.hybridMlkemSS, state.hybridFrodoSS));
-    state.hybridStatus = 'Hybrid derivation complete. Combined secret is 32 bytes via SHA-256.';
+    try {
+      state.hybridMlkemSS = randomBytes(32);
+      state.hybridFrodoSS = randomBytes(24);
+      state.hybridCombinedSS = await sha256(concat(state.hybridMlkemSS, state.hybridFrodoSS));
+      state.hybridStatus = 'Hybrid derivation complete. Combined secret is 32 bytes via SHA-256.';
+    } catch {
+      state.hybridStatus = 'Hybrid derivation failed — crypto.subtle may be unavailable (requires HTTPS).';
+    }
     render();
   });
 
