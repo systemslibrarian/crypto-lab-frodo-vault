@@ -622,3 +622,270 @@ blockquote footer {
     height: 0.5rem;
   }
 }
+
+/* --- Keyboard hint --- */
+
+.kbd-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink2);
+  text-align: right;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg2);
+  font: 0.75rem var(--mono);
+  color: var(--ink1);
+}
+
+/* --- Noise slider --- */
+
+.noise-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.noise-slider-wrap input[type='range'] {
+  flex: 1;
+  min-width: 100px;
+  accent-color: var(--accent);
+}
+
+/* --- Matrix animation --- */
+
+.matrix-viz {
+  display: grid;
+  gap: 0.3rem;
+  font: 0.8rem var(--mono);
+}
+
+.matrix-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.matrix-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 1.6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg2);
+  color: var(--ink1);
+  transition: background 200ms, color 200ms, border-color 200ms;
+}
+
+.matrix-cell.active {
+  background: var(--accent);
+  color: var(--chip-on-accent);
+  border-color: var(--accent);
+}
+
+.matrix-cell.result {
+  background: var(--accent-soft);
+  color: var(--ink0);
+  border-color: var(--accent);
+}
+
+.matrix-label {
+  font-weight: 700;
+  color: var(--ink0);
+  margin-bottom: 0.2rem;
+}
+
+.matrix-equation {
+  margin-top: 0.5rem;
+  font: 0.85rem var(--mono);
+  color: var(--accent);
+  min-height: 1.2em;
+}
+
+/* --- Ciphertext diff --- */
+
+.ct-diff {
+  font: 0.7rem/1.4 var(--mono);
+  word-break: break-all;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg2);
+  max-height: 6rem;
+  overflow-y: auto;
+}
+
+.ct-diff .tampered {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* --- Failure probability chart --- */
+
+.fail-chart {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.fail-row {
+  display: grid;
+  grid-template-columns: 4rem 1fr 4rem;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.fail-track {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  height: 0.9rem;
+  background: var(--bg2);
+  overflow: hidden;
+}
+
+.fail-fill {
+  height: 100%;
+  width: var(--w);
+  border-radius: 8px;
+}
+
+.fail-fill.safe {
+  background: var(--ok);
+}
+
+.fail-fill.risky {
+  background: var(--warn);
+}
+
+.fail-fill.broken {
+  background: var(--danger);
+}
+
+/* --- Hybrid KEM --- */
+
+.hybrid-box {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.hybrid-secrets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .hybrid-secrets {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hybrid-final {
+  font: 700 0.85rem var(--mono);
+  color: var(--accent);
+  word-break: break-all;
+}
+
+/* --- Collapsible sections --- */
+
+.collapsible-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--ink0);
+  font: 700 1.1rem var(--sans);
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.collapsible-toggle::before {
+  content: '▶';
+  display: inline-block;
+  font-size: 0.7rem;
+  transition: transform 200ms;
+  color: var(--accent);
+}
+
+.collapsible-toggle[aria-expanded='true']::before {
+  transform: rotate(90deg);
+}
+
+.collapsible-body {
+  display: none;
+  margin-top: 0.6rem;
+}
+
+.collapsible-body.open {
+  display: block;
+}
+
+/* --- Print stylesheet --- */
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  .shell {
+    width: 100%;
+    margin: 0;
+  }
+
+  .hero-header {
+    background: none !important;
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+
+  .tabs,
+  .kbd-hint,
+  .theme-toggle,
+  .skip-link,
+  .controls,
+  button:not(.collapsible-toggle) {
+    display: none !important;
+  }
+
+  .panel {
+    display: grid !important;
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  .panel[hidden] {
+    display: grid !important;
+  }
+
+  .card {
+    background: white !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+
+  .collapsible-body {
+    display: block !important;
+  }
+
+  a::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    color: #666;
+  }
+}

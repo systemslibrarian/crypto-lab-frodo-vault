@@ -66,12 +66,19 @@ const FRODO: Record<FrodoId, FrodoParams> = {
   },
 };
 
+const TABS: TabId[] = ['lwe', 'keygen', 'kem', 'compare', 'errors', 'landscape', 'divide'];
+
+function tabFromHash(): TabId | null {
+  const h = location.hash.replace('#', '');
+  return TABS.includes(h as TabId) ? (h as TabId) : null;
+}
+
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) throw new Error('App root not found');
 const appRoot = app;
 
 const state = {
-  activeTab: 'lwe' as TabId,
+  activeTab: (tabFromHash() ?? 'lwe') as TabId,
   selectedParam: 'frodo976' as FrodoId,
   lweSecret: [3, 7, 11] as [number, number, number],
   lweSamples: [] as LweSample[],
@@ -88,6 +95,7 @@ const state = {
   kemEncapMs: 0,
   kemDecapMs: 0,
   kemStatus: 'Generate Alice keypair to begin encapsulation.',
+  kemPreTamperCt: null as Uint8Array | null,
   compareBench: '',
   compareRows: {
     frodo: { keygen: 0, encaps: 0, decaps: 0 },
@@ -96,6 +104,14 @@ const state = {
   errorHistogram: [] as Array<{ value: number; count: number }>,
   errorSummary: 'Sample 1000 errors to visualize FrodoKEM-style discrete distribution.',
   failureSummary: 'Run the toy decryption-failure demo (n=4, q=17) with oversized errors.',
+  lweNoiseMag: 1,
+  failProbs: [] as Array<{ maxErr: number; rate: number }>,
+  matrixAnimHtml: '',
+  matrixAnimRunning: false,
+  hybridFrodoSS: null as Uint8Array | null,
+  hybridMlkemSS: null as Uint8Array | null,
+  hybridCombinedSS: null as Uint8Array | null,
+  hybridStatus: 'Run the hybrid demo to derive a combined shared secret.',
 };
 
 function randomUint32(): number {
@@ -167,13 +183,13 @@ function vecDot(a: [number, number, number], b: [number, number, number], q: num
   return mod(a[0] * b[0] + a[1] * b[1] + a[2] * b[2], q);
 }
 
-function buildToyLweSamples(secret: [number, number, number], includeNoise: boolean): LweSample[] {
+function buildToyLweSamples(secret: [number, number, number], includeNoise: boolean, noiseMag = 1): LweSample[] {
   const q = 97;
   const count = includeNoise ? 5 : 3;
   const samples: LweSample[] = [];
   while (samples.length < count) {
     const a: [number, number, number] = [randomFromRange(0, q - 1), randomFromRange(0, q - 1), randomFromRange(0, q - 1)];
-    const e = includeNoise ? [-1, 0, 1][randomInt(3)] : 0;
+    const e = includeNoise ? randomFromRange(-noiseMag, noiseMag) : 0;
     const b = mod(vecDot(a, secret, q) + e, q);
     samples.push({ a, b, e });
   }
@@ -286,9 +302,118 @@ function runFailureDemo(): string {
   return 'No failure occurred in 25 tries. Re-run: oversized errors still cause frequent failures at toy scale.';
 }
 
+function computeFailureProbabilities(): Array<{ maxErr: number; rate: number }> {
+  const q = 17;
+  const half = Math.floor(q / 2);
+  const trials = 500;
+  const results: Array<{ maxErr: number; rate: number }> = [];
+  for (let maxErr = 1; maxErr <= 8; maxErr++) {
+    let failures = 0;
+    for (let t = 0; t < trials; t++) {
+      const m = randomInt(2);
+      const e = randomFromRange(-maxErr, maxErr);
+      const noisy = mod(m * half + e, q);
+      const d0 = Math.min(mod(noisy, q), mod(-noisy, q));
+      const d1 = Math.min(mod(noisy - half, q), mod(half - noisy, q));
+      if ((d1 < d0 ? 1 : 0) !== m) failures++;
+    }
+    results.push({ maxErr, rate: failures / trials });
+  }
+  return results;
+}
+
+async function runMatrixAnimation(): Promise<void> {
+  const container = document.getElementById('matrix-anim-container');
+  if (!container) return;
+  state.matrixAnimRunning = true;
+
+  const q = 97;
+  const s = state.lweSecret;
+  const rows = 3;
+  const A: number[][] = [];
+  const errors: number[] = [];
+  const results: number[] = [];
+
+  for (let i = 0; i < rows; i++) {
+    A.push([randomFromRange(0, q - 1), randomFromRange(0, q - 1), randomFromRange(0, q - 1)]);
+    const e = randomFromRange(-state.lweNoiseMag, state.lweNoiseMag);
+    errors.push(e);
+    results.push(mod(A[i][0] * s[0] + A[i][1] * s[1] + A[i][2] * s[2] + e, q));
+  }
+
+  function renderMatrix(activeRow: number, activeCol: number, computed: number[]): string {
+    let html = '<div class="matrix-viz">';
+    html += '<div class="matrix-label">A · s + e = b mod 97</div>';
+    html += '<div style="display:grid;grid-template-columns:auto auto auto;gap:0.5rem;align-items:center">';
+    html += '<div>';
+    for (let r = 0; r < rows; r++) {
+      html += '<div class="matrix-row">';
+      for (let c = 0; c < 3; c++) {
+        const cls = r === activeRow && c === activeCol ? 'active' : (r < activeRow ? 'result' : '');
+        html += `<div class="matrix-cell ${cls}">${A[r][c]}</div>`;
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="text-align:center">·<br>';
+    for (let c = 0; c < 3; c++) {
+      const cls = c === activeCol && activeRow >= 0 ? 'active' : '';
+      html += `<div class="matrix-cell ${cls}">${s[c]}</div>`;
+    }
+    html += '</div>';
+    html += '<div style="text-align:center">=<br>';
+    for (let r = 0; r < rows; r++) {
+      if (r < computed.length) {
+        html += `<div class="matrix-cell result">${computed[r]}</div>`;
+      } else {
+        html += '<div class="matrix-cell">?</div>';
+      }
+    }
+    html += '</div></div>';
+    if (activeRow >= 0 && activeRow < rows) {
+      const terms = A[activeRow].map((a, c) => `${a}·${s[c]}`);
+      html += `<div class="matrix-equation">${terms.join(' + ')} + (${errors[activeRow]}) = ${results[activeRow]} mod ${q}</div>`;
+    } else if (computed.length === rows) {
+      html += '<div class="matrix-equation">Complete! All b values computed.</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  const computed: number[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < 3; c++) {
+      container.innerHTML = renderMatrix(r, c, computed);
+      await new Promise(res => setTimeout(res, 300));
+    }
+    computed.push(results[r]);
+    container.innerHTML = renderMatrix(r, -1, computed);
+    await new Promise(res => setTimeout(res, 400));
+  }
+  container.innerHTML = renderMatrix(-1, -1, computed);
+  state.matrixAnimHtml = container.innerHTML;
+  state.matrixAnimRunning = false;
+}
+
 function formatHex(bytes: Uint8Array | null): string {
   if (!bytes) return '--';
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function renderCtDiff(pre: Uint8Array | null, post: Uint8Array | null, maxBytes = 64): string {
+  if (!pre || !post) return '';
+  const parts: string[] = [];
+  const len = Math.min(pre.length, post.length, maxBytes);
+  for (let i = 0; i < len; i++) {
+    const hex = post[i].toString(16).padStart(2, '0');
+    if (pre[i] !== post[i]) {
+      parts.push(`<span class="tampered">${hex}</span>`);
+    } else {
+      parts.push(hex);
+    }
+  }
+  if (post.length > maxBytes) parts.push(`... [${post.length - maxBytes} more]`);
+  return parts.join('');
 }
 
 function render(): void {
@@ -319,6 +444,7 @@ function render(): void {
       <button class="tab ${state.activeTab === 'landscape' ? 'active' : ''}" data-tab="landscape" role="tab" id="tab-landscape" aria-selected="${state.activeTab === 'landscape'}" aria-controls="panel-landscape">6. PQ Landscape</button>
       <button class="tab ${state.activeTab === 'divide' ? 'active' : ''}" data-tab="divide" role="tab" id="tab-divide" aria-selected="${state.activeTab === 'divide'}" aria-controls="panel-divide">7. The Global Divide</button>
     </nav>
+    <p class="kbd-hint" aria-hidden="true">Navigate: <kbd>←</kbd> <kbd>→</kbd> arrow keys</p>
 
     <section class="panel ${state.activeTab === 'lwe' ? 'visible' : ''}" id="panel-lwe" role="tabpanel" aria-labelledby="tab-lwe" ${state.activeTab !== 'lwe' ? 'hidden' : ''}>
       <article class="card">
@@ -347,16 +473,23 @@ function render(): void {
             <button id="solve-clean">Solve without noise</button>
             <button id="solve-noisy">Solve with noise</button>
           </div>
+          <div class="noise-slider-wrap">
+            <label for="noise-mag">Error magnitude: <strong>${state.lweNoiseMag}</strong></label>
+            <input id="noise-mag" type="range" min="0" max="48" value="${state.lweNoiseMag}" />
+            <span>${state.lweNoiseMag === 0 ? 'No noise' : state.lweNoiseMag <= 3 ? 'Small (solvable)' : state.lweNoiseMag <= 12 ? 'Medium (hard)' : 'Large (impossible)'}</span>
+          </div>
           <p role="status" aria-live="polite">${state.lweOutcome}</p>
         </div>
         <div>
-          <h3>Ring-LWE vs plain LWE</h3>
+          <button class="collapsible-toggle" aria-expanded="false" data-collapse="lwe-detail">Ring-LWE vs plain LWE</button>
+          <div class="collapsible-body" id="lwe-detail">
           <ul>
             <li>Plain LWE (FrodoKEM): A is a random n×n matrix, no ring structure.</li>
             <li>Ring/Module-LWE (ML-KEM): structured polynomial algebra gives faster and smaller operations.</li>
             <li>FrodoKEM design choice: keep only the plain LWE assumption.</li>
           </ul>
           <p>Historical context: Regev (2005), Ring-LWE by Lyubashevsky-Peikert-Regev (2010), FrodoKEM (2016) "Take off the ring".</p>
+          </div>
         </div>
       </article>
 
@@ -377,6 +510,13 @@ function render(): void {
 
       <article class="card callout">
         <strong>Why this matters:</strong> LWE underlies much of modern post-quantum KEM design. Removing ring structure increases conservatism at significant size cost.
+      </article>
+
+      <article class="card">
+        <h3>Animated: A·s + e = b mod q</h3>
+        <p>Watch each row of A multiplied by secret s, then error e added. This is how each LWE sample is computed.</p>
+        <button id="run-matrix-anim" ${state.matrixAnimRunning ? 'disabled' : ''}>Animate A·s + e</button>
+        <div id="matrix-anim-container">${state.matrixAnimHtml}</div>
       </article>
     </section>
 
@@ -420,14 +560,14 @@ function render(): void {
           <div class="bar-group">
             <div class="bar-line">
               <strong>ML-KEM-768: 1,184 bytes</strong>
-              <div class="bar-track"><div class="bar-fill" style="--w: 8%;"></div></div>
+              <div class="bar-track"><div class="bar-fill" style="--w: ${((1184 / params.publicKey) * 100).toFixed(1)}%;"></div></div>
             </div>
             <div class="bar-line">
-              <strong>FrodoKEM-976: 15,632 bytes</strong>
+              <strong>${params.label}: ${params.publicKey.toLocaleString()} bytes</strong>
               <div class="bar-track"><div class="bar-fill" style="--w: 100%;"></div></div>
             </div>
           </div>
-          <p>Ratio: FrodoKEM-976 public key is about 13.2× larger than ML-KEM-768.</p>
+          <p>Ratio: ${params.label} public key is about ${(params.publicKey / 1184).toFixed(1)}× larger than ML-KEM-768.</p>
         </div>
       </article>
 
@@ -458,6 +598,7 @@ function render(): void {
           <p>Alice shared secret (32 bytes): <code>${state.kemAliceSecret ? formatHex(state.kemAliceSecret) : '--'}</code></p>
           <p>Encapsulation time: ${state.kemEncapMs ? `${state.kemEncapMs.toFixed(3)} ms` : '--'}</p>
           <p>Decapsulation time: ${state.kemDecapMs ? `${state.kemDecapMs.toFixed(3)} ms` : '--'}</p>
+          ${state.kemPreTamperCt ? `<div class="ct-diff">${renderCtDiff(state.kemPreTamperCt, state.kemCiphertext)}</div>` : ''}
           <p class="${kemMatch ? 'status-ok' : 'status-bad'}">${
             state.kemAliceSecret && state.kemBobSecret
               ? kemMatch
@@ -518,13 +659,39 @@ function render(): void {
       </article>
 
       <article class="card decision">
-        <h3>Decision tree</h3>
+        <button class="collapsible-toggle" aria-expanded="false" data-collapse="decision-tree">Decision tree</button>
+        <div class="collapsible-body" id="decision-tree">
         <p>Post-quantum TLS or general use → <strong>ML-KEM-768</strong>.</p>
         <p>Maximum conservatism and size is acceptable → <strong>FrodoKEM-976</strong>.</p>
         <p>Archive secrecy horizon 20+ years → <strong>FrodoKEM-1344</strong>.</p>
         <p>Need smallest keys and fastest operation → <strong>ML-KEM-512</strong>.</p>
         <p>Maximum assurance recommendation: <code>SS = KDF(SS_mlkem || SS_frodo)</code>.</p>
         <p>Kyber Vault cross-link: <a href="https://systemslibrarian.github.io/crypto-lab-kyber-vault/" target="_blank" rel="noopener">https://systemslibrarian.github.io/crypto-lab-kyber-vault/</a></p>
+        </div>
+      </article>
+
+      <article class="card">
+        <h3>Hybrid KEM walkthrough</h3>
+        <p>Combine ML-KEM-768 + FrodoKEM-976 shared secrets into one hybrid secret. Security holds if <em>either</em> KEM remains secure.</p>
+        <button id="run-hybrid">Run hybrid KEM derivation</button>
+        <p role="status" aria-live="polite">${state.hybridStatus}</p>
+        ${state.hybridCombinedSS ? `
+        <div class="hybrid-box">
+          <div class="hybrid-secrets">
+            <div>
+              <strong>ML-KEM-768 SS:</strong><br>
+              <code>${formatHex(state.hybridMlkemSS)}</code>
+            </div>
+            <div>
+              <strong>FrodoKEM-976 SS:</strong><br>
+              <code>${formatHex(state.hybridFrodoSS)}</code>
+            </div>
+          </div>
+          <div>
+            <strong>Hybrid SS = KDF(SS_mlkem || SS_frodo):</strong><br>
+            <span class="hybrid-final">${formatHex(state.hybridCombinedSS)}</span>
+          </div>
+        </div>` : ''}
       </article>
 
       <article class="card callout">
@@ -539,6 +706,7 @@ function render(): void {
         <div class="controls">
           <button id="sample-errors">Sample 1000 errors</button>
           <button id="run-failure">Run toy decryption failure</button>
+          <button id="run-fail-chart">Failure probability chart</button>
         </div>
         <p role="status" aria-live="polite">${state.errorSummary}</p>
         <p role="status" aria-live="polite">${state.failureSummary}</p>
@@ -571,6 +739,19 @@ function render(): void {
           <p>FrodoKEM-976 decryption failure target: &lt; 2<sup>-150</sup>.</p>
         </div>
       </article>
+
+      ${state.failProbs.length > 0 ? `
+      <article class="card">
+        <h3>Failure probability vs error magnitude (toy q=17)</h3>
+        <div class="fail-chart">
+          ${state.failProbs.map((fp) => {
+            const pct = (fp.rate * 100);
+            const cls = fp.rate === 0 ? 'safe' : fp.rate < 0.15 ? 'risky' : 'broken';
+            return `<div class="fail-row"><span>±${fp.maxErr}</span><div class="fail-track"><div class="fail-fill ${cls}" style="--w:${Math.max(pct, 1)}%;"></div></div><span>${(pct).toFixed(1)}%</span></div>`;
+          }).join('')}
+        </div>
+        <p>Green = 0% failure, yellow = occasional, red = frequent. The cliff is sharp — small increases in error magnitude cause catastrophic failure rates.</p>
+      </article>` : ''}
 
       <article class="card callout">
         <strong>Why this matters:</strong> Error distributions are the bridge between LWE proofs and practical implementations. FrodoKEM chooses conservative parameters even at performance cost.
@@ -607,11 +788,13 @@ function render(): void {
           </ul>
         </div>
         <div>
-          <h3>Belt-and-suspenders recommendation</h3>
+          <button class="collapsible-toggle" aria-expanded="false" data-collapse="belt-suspenders">Belt-and-suspenders recommendation</button>
+          <div class="collapsible-body" id="belt-suspenders">
           <p>For most deployments, ML-KEM-768 is enough. For highest assurance, combine ML-KEM-768 + FrodoKEM-976.</p>
           <p>Hybrid secret derivation: <code>SS = KDF(SS_mlkem || SS_frodo)</code>. Security holds if either KEM remains secure.</p>
           <p>20-year horizon framing: FrodoKEM is explicit insurance against uncertain long-term structural risk.</p>
           <p>Deployment notes: FrodoKEM was originated at Microsoft Research and appears in high-assurance hybrid deployments such as Amazon s2n-tls options.</p>
+          </div>
         </div>
       </article>
 
@@ -701,6 +884,7 @@ function render(): void {
   appRoot.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       state.activeTab = button.dataset.tab as TabId;
+      history.pushState(null, '', '#' + state.activeTab);
       render();
     });
   });
@@ -725,6 +909,19 @@ function render(): void {
         tabButtons[next].focus();
         tabButtons[next].click();
       }
+    });
+  });
+
+  // Collapsible sections
+  appRoot.querySelectorAll<HTMLButtonElement>('.collapsible-toggle').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const targetId = toggle.dataset.collapse;
+      if (!targetId) return;
+      const body = appRoot.querySelector(`#${targetId}`);
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(!isOpen));
     });
   });
 
@@ -753,10 +950,25 @@ function render(): void {
     const s1 = parseInt(appRoot.querySelector<HTMLInputElement>('#s1')?.value ?? '0', 10) || 0;
     const s2 = parseInt(appRoot.querySelector<HTMLInputElement>('#s2')?.value ?? '0', 10) || 0;
     state.lweSecret = [mod(s0, 97), mod(s1, 97), mod(s2, 97)];
-    state.lweSamples = buildToyLweSamples(state.lweSecret, true);
+    state.lweSamples = buildToyLweSamples(state.lweSecret, true, state.lweNoiseMag);
     state.lweCleanSamples = buildToyLweSamples(state.lweSecret, false);
     state.lweOutcome = 'Generated 5 noisy samples and 3 noiseless equations from the selected secret.';
     render();
+  });
+
+  const noiseSlider = appRoot.querySelector<HTMLInputElement>('#noise-mag');
+  noiseSlider?.addEventListener('input', () => {
+    state.lweNoiseMag = parseInt(noiseSlider.value, 10);
+    if (state.lweSamples.length > 0) {
+      state.lweSamples = buildToyLweSamples(state.lweSecret, true, state.lweNoiseMag);
+      state.lweOutcome = `Regenerated samples with error magnitude ±${state.lweNoiseMag}.`;
+    }
+    render();
+  });
+
+  const matrixAnimBtn = appRoot.querySelector<HTMLButtonElement>('#run-matrix-anim');
+  matrixAnimBtn?.addEventListener('click', () => {
+    runMatrixAnimation();
   });
 
   const solveClean = appRoot.querySelector<HTMLButtonElement>('#solve-clean');
@@ -821,6 +1033,7 @@ function render(): void {
     state.kemAliceSecret = null;
     state.kemEncapMs = 0;
     state.kemDecapMs = 0;
+    state.kemPreTamperCt = null;
     state.kemStatus = 'Alice keypair generated. Bob can encapsulate now.';
     render();
   });
@@ -840,6 +1053,7 @@ function render(): void {
     state.kemCiphertext = ct;
     state.kemBobSecret = secret;
     state.kemAliceSecret = null;
+    state.kemPreTamperCt = null;
     state.kemStatus = `Bob encapsulated using ${p.label}. Ciphertext size = ${p.ciphertext} bytes.`;
     render();
   });
@@ -865,6 +1079,9 @@ function render(): void {
       render();
       return;
     }
+    if (!state.kemPreTamperCt) {
+      state.kemPreTamperCt = new Uint8Array(state.kemCiphertext);
+    }
     const idx = randomInt(state.kemCiphertext.length);
     state.kemCiphertext[idx] = state.kemCiphertext[idx] ^ 0x01;
     state.kemStatus = `Tampered ciphertext byte at index ${idx}. Next decapsulation should mismatch.`;
@@ -885,6 +1102,15 @@ function render(): void {
     render();
   });
 
+  const runHybrid = appRoot.querySelector<HTMLButtonElement>('#run-hybrid');
+  runHybrid?.addEventListener('click', async () => {
+    state.hybridMlkemSS = randomBytes(32);
+    state.hybridFrodoSS = randomBytes(24);
+    state.hybridCombinedSS = await sha256(concat(state.hybridMlkemSS, state.hybridFrodoSS));
+    state.hybridStatus = 'Hybrid derivation complete. Combined secret is 32 bytes via SHA-256.';
+    render();
+  });
+
   const sampleErrors = appRoot.querySelector<HTMLButtonElement>('#sample-errors');
   sampleErrors?.addEventListener('click', () => {
     const p = FRODO[state.selectedParam];
@@ -898,8 +1124,22 @@ function render(): void {
     state.failureSummary = runFailureDemo();
     render();
   });
+
+  const runFailChart = appRoot.querySelector<HTMLButtonElement>('#run-fail-chart');
+  runFailChart?.addEventListener('click', () => {
+    state.failProbs = computeFailureProbabilities();
+    render();
+  });
 }
 
-state.lweSamples = buildToyLweSamples(state.lweSecret, true);
+window.addEventListener('popstate', () => {
+  const t = tabFromHash();
+  if (t && t !== state.activeTab) {
+    state.activeTab = t;
+    render();
+  }
+});
+
+state.lweSamples = buildToyLweSamples(state.lweSecret, true, state.lweNoiseMag);
 state.lweCleanSamples = buildToyLweSamples(state.lweSecret, false);
 render();
