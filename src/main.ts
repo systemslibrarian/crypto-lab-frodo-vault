@@ -993,6 +993,10 @@ function render(): void {
     state.failProbs = computeFailureProbabilities();
     render();
   });
+
+  // Scroll active tab into view in the horizontal tab bar
+  const activeTabBtn = appRoot.querySelector<HTMLButtonElement>('.tab.active');
+  activeTabBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
 }
 
 window.addEventListener('popstate', () => {

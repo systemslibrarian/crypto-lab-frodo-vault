@@ -170,8 +170,21 @@ h3 {
 
 .tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.45rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.25rem;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.tabs::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 2px;
 }
 
 .tab,
@@ -189,6 +202,12 @@ input {
 button {
   padding: 0.5rem 0.9rem;
   cursor: pointer;
+}
+
+.tab {
+  white-space: nowrap;
+  scroll-snap-align: start;
+  flex-shrink: 0;
 }
 
 .tab.active {
@@ -469,12 +488,12 @@ a:focus-visible {
   }
 
   .tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
   }
 
   .tab {
-    text-align: center;
+    font-size: 0.82rem;
+    padding: 0.45rem 0.75rem;
   }
 
   /* Responsive table wrapper */
@@ -508,7 +527,7 @@ a:focus-visible {
   }
 
   .tabs {
-    grid-template-columns: 1fr;
+    gap: 0.3rem;
   }
 
   .controls {
