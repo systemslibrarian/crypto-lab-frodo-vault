@@ -10,6 +10,10 @@ to rely on the most conservative LWE hardness assumption. The cost is larger
 keys (~15KB public key for FrodoKEM-976 vs ~1KB for ML-KEM-768). The benefit
 is security that does not depend on ring-LWE remaining unbroken — making
 FrodoKEM the right choice for highest-assurance, long-lived secrets.
+Exhibit 7 places FrodoKEM in the context of the emerging global standards
+divide: China's preference for structureless lattice algorithms (S-Cloud+)
+versus NIST's algebraic lattice standards (ML-KEM), and what that divergence
+means for the future of post-quantum cryptography.
 
 ## 2. When to Use It
 
@@ -29,12 +33,14 @@ FrodoKEM the right choice for highest-assurance, long-lived secrets.
 
 Link: https://systemslibrarian.github.io/crypto-lab-frodo-vault/
 
-Six exhibits: the LWE problem from first principles with toy interactive
+Seven exhibits: the LWE problem from first principles with toy interactive
 demo, FrodoKEM key generation with real parameter sizes visualized, full
 encapsulation and decapsulation with tamper detection, side-by-side
 FrodoKEM vs ML-KEM comparison with decision tree, error distribution
-visualizer with decryption failure demo, and FrodoKEM in the full PQ KEM
-landscape with hybrid recommendation.
+visualizer with decryption failure demo, FrodoKEM in the full PQ KEM
+landscape with hybrid recommendation, and the global PQC standards divide —
+structureless vs algebraic lattices, China's S-Cloud+, and why even NIST
+hedged with HQC.
 
 ## 4. How to Run Locally
 
