@@ -14,6 +14,7 @@
       <button class="tab ${r.activeTab===`compare`?`active`:``}" data-tab="compare" role="tab" id="tab-compare" aria-selected="${r.activeTab===`compare`}" aria-controls="panel-compare">4. Frodo vs ML-KEM</button>
       <button class="tab ${r.activeTab===`errors`?`active`:``}" data-tab="errors" role="tab" id="tab-errors" aria-selected="${r.activeTab===`errors`}" aria-controls="panel-errors">5. Error Distribution</button>
       <button class="tab ${r.activeTab===`landscape`?`active`:``}" data-tab="landscape" role="tab" id="tab-landscape" aria-selected="${r.activeTab===`landscape`}" aria-controls="panel-landscape">6. PQ Landscape</button>
+      <button class="tab ${r.activeTab===`divide`?`active`:``}" data-tab="divide" role="tab" id="tab-divide" aria-selected="${r.activeTab===`divide`}" aria-controls="panel-divide">7. The Global Divide</button>
     </nav>
 
     <section class="panel ${r.activeTab===`lwe`?`visible`:``}" id="panel-lwe" role="tabpanel" aria-labelledby="tab-lwe" ${r.activeTab===`lwe`?``:`hidden`}>
@@ -299,6 +300,82 @@
         <strong>Why this matters:</strong> FrodoKEM is not the default KEM. It is the conservative option for secrets where long-term risk tolerance is near zero.
       </article>
     </section>
+
+    <section class="panel ${r.activeTab===`divide`?`visible`:``}" id="panel-divide" role="tabpanel" aria-labelledby="tab-divide" ${r.activeTab===`divide`?``:`hidden`}>
+
+      <article class="card">
+        <h2>Two Philosophies, One Problem</h2>
+        <div class="table-wrap">
+          <table class="divide-table">
+            <caption class="sr-only">Structured vs structureless lattice comparison</caption>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">Structured Lattices (NIST path)</th>
+                <th scope="col">Structureless Lattices (China path)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Math basis</td><td>Ring-LWE / Module-LWE</td><td>Plain LWE (no ring)</td></tr>
+              <tr><td>Speed</td><td>Fast — NTT-optimized</td><td>Slower — matrix multiply</td></tr>
+              <tr><td>Key sizes</td><td>Compact (~800 B – 1.5 KB)</td><td>Large (~10–20 KB)</td></tr>
+              <tr><td>Security proof</td><td>Reduction gap exists</td><td>Cleaner worst-case reduction</td></tr>
+              <tr class="divide-highlight"><td>Algebraic attack surface</td><td>Present</td><td>Absent</td></tr>
+              <tr><td>Standards status</td><td>NIST FIPS 203/204 (2024)</td><td>China target: ~2028–2029</td></tr>
+              <tr><td>Named algorithms</td><td>ML-KEM, ML-DSA, FALCON</td><td>S-Cloud+ (announced)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Algebraic lattice schemes gain their speed from a mathematical shortcut: polynomial ring arithmetic, accelerated by the Number Theoretic Transform (NTT). That same structure is an extra attack surface — one that the underlying plain-LWE hardness proof does not cover. Whether that gap will ever be exploited is unknown. That uncertainty is exactly what drives the structureless approach.</p>
+      </article>
+
+      <article class="card">
+        <h2>S-Cloud+ and the Structureless Bet</h2>
+        <blockquote>
+          "International standards based on algebraic lattices have some degree of security degradation. But structureless cryptographic algorithms basically do not have this problem."
+          <footer>— Wang Xiaoyun, Tsinghua University Institute for Advanced Study, National People's Congress, Beijing, March 2026</footer>
+        </blockquote>
+        <p>China's leading structureless algorithm candidate is S-Cloud+, developed by Chinese cryptographers and actively promoted as the domestic alternative to ML-KEM. Its design philosophy is the same as FrodoKEM: plain LWE over an integer matrix, no ring structure, no NTT. As of April 2026, S-Cloud+ does not have a public cryptographic specification — its parameter sets, key sizes, and exact security proofs are not yet published. What is known is its philosophical commitment: trade performance for the most conservative possible security foundation.</p>
+        <p>In February 2025, China's Institute of Commercial Cryptography Standards (OSCCA) issued a global call for post-quantum algorithm proposals — a direct parallel to NIST's 2016 competition, with a distinctly different technical direction baked in. Wang Xiaoyun projected a three-to-five year timeline to domestic standards, with finance and energy sectors first in line for migration.</p>
+        <p>The motivation is not purely mathematical. Every major technological power wants cryptographic independence — the ability to deploy standards it controls, audits, and trusts. China's earlier development of SM2, SM3, and SM4 (classical cryptography standards) and their mandatory domestic use established this pattern. S-Cloud+ is its post-quantum continuation.</p>
+      </article>
+
+      <article class="card">
+        <h2>Even NIST Hedged</h2>
+        <p>In March 2025, NIST selected <strong>HQC</strong> — a code-based algorithm using completely different mathematics (error-correcting codes, not lattices) — as a fourth backup standard. Dustin Moody, NIST's PQC project lead, stated the rationale directly: having a fallback in case ML-KEM proves vulnerable.</p>
+        <p>This is the Western establishment quietly acknowledging what China has said loudly: the algebraic lattice bet might not be safe forever.</p>
+        <ul>
+          <li><strong>China's approach:</strong> Don't use algebraic lattices to begin with. Use plain LWE (S-Cloud+).</li>
+          <li><strong>NIST's approach:</strong> Use algebraic lattices (ML-KEM) as the primary standard, but hold HQC in reserve in case of a breakthrough.</li>
+        </ul>
+        <p>Both strategies acknowledge the same risk. They differ in how much they trust the algebraic structure.</p>
+      </article>
+
+      <article class="card">
+        <h2>FrodoKEM as the Bridge</h2>
+        <p>FrodoKEM is not S-Cloud+. But they are philosophical siblings — both plain LWE, both structureless, both accepting the performance cost to gain the cleaner security proof. When China finalizes S-Cloud+ parameters and publishes its specification, the math you have explored in Exhibits 1–5 of this demo is the math that will underlie it. FrodoKEM is the working, publicly specified, NIST-evaluated embodiment of exactly the approach China has chosen as its strategic bet.</p>
+        <div class="timeline">
+          <div class="timeline-item"><span class="timeline-year">2016</span><span class="timeline-text">FrodoKEM published (Bos et al., Microsoft Research)</span></div>
+          <div class="timeline-item"><span class="timeline-year">2022</span><span class="timeline-text">FrodoKEM eliminated from NIST Round 4 — performance concerns</span></div>
+          <div class="timeline-item"><span class="timeline-year">2024</span><span class="timeline-text">NIST finalizes ML-KEM (FIPS 203), ML-DSA (FIPS 204), SLH-DSA (FIPS 205)</span></div>
+          <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">NIST selects HQC as backup standard (March)</span></div>
+          <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">China OSCCA issues global PQC algorithm call (February)</span></div>
+          <div class="timeline-item"><span class="timeline-year">2026</span><span class="timeline-text">Wang Xiaoyun announces S-Cloud+ direction at NPC (March)</span></div>
+          <div class="timeline-item"><span class="timeline-year">~2028</span><span class="timeline-text">China domestic PQC standards expected</span></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Explore the Full Landscape</h2>
+        <ul>
+          <li><a href="https://systemslibrarian.github.io/crypto-lab-kyber-vault/" target="_blank" rel="noopener"><strong>kyber-vault</strong></a> — ML-KEM structured lattice KEM (the NIST standard that S-Cloud+ is the alternative to)</li>
+          <li><a href="https://systemslibrarian.github.io/crypto-lab-dilithium-seal/" target="_blank" rel="noopener"><strong>dilithium-seal</strong></a> — ML-DSA structured lattice signatures (FIPS 204)</li>
+          <li><a href="https://systemslibrarian.github.io/crypto-lab-bike-vault/" target="_blank" rel="noopener"><strong>bike-vault</strong></a> — BIKE code-based KEM (same mathematical family as HQC, NIST's hedge)</li>
+          <li><a href="https://systemslibrarian.github.io/crypto-lab-hqc-vault/" target="_blank" rel="noopener"><strong>hqc-vault</strong></a> — HQC code-based KEM (NIST's actual backup standard)</li>
+        </ul>
+      </article>
+
+    </section>
   </main>
   `,n.querySelectorAll(`[data-tab]`).forEach(e=>{e.addEventListener(`click`,()=>{r.activeTab=e.dataset.tab,T()})});let x=Array.from(n.querySelectorAll(`[role="tab"]`));x.forEach((e,t)=>{e.setAttribute(`tabindex`,e.classList.contains(`active`)?`0`:`-1`),e.addEventListener(`keydown`,e=>{let n=-1;e.key===`ArrowRight`||e.key===`ArrowDown`?n=(t+1)%x.length:e.key===`ArrowLeft`||e.key===`ArrowUp`?n=(t-1+x.length)%x.length:e.key===`Home`?n=0:e.key===`End`&&(n=x.length-1),n>=0&&(e.preventDefault(),x[n].focus(),x[n].click())})});let E=n.querySelector(`#theme-toggle`);E&&E.addEventListener(`click`,()=>{let e=g()===`dark`?`light`:`dark`;_(e);let t=v(e);E.textContent=t.icon,E.setAttribute(`aria-label`,t.label)}),n.querySelector(`#rand-secret`)?.addEventListener(`click`,()=>{r.lweSecret=[o(0,96),o(0,96),o(0,96)],r.lweOutcome=`Secret randomized to [${r.lweSecret.join(`, `)}].`,r.lweSamples=[],T()}),n.querySelector(`#gen-samples`)?.addEventListener(`click`,()=>{let e=parseInt(n.querySelector(`#s0`)?.value??`0`,10)||0,t=parseInt(n.querySelector(`#s1`)?.value??`0`,10)||0,i=parseInt(n.querySelector(`#s2`)?.value??`0`,10)||0;r.lweSecret=[s(e,97),s(t,97),s(i,97)],r.lweSamples=d(r.lweSecret,!0),r.lweCleanSamples=d(r.lweSecret,!1),r.lweOutcome=`Generated 5 noisy samples and 3 noiseless equations from the selected secret.`,T()}),n.querySelector(`#solve-clean`)?.addEventListener(`click`,()=>{if(r.lweCleanSamples.length<3){r.lweOutcome=`Generate samples first.`,T();return}let e=l(r.lweCleanSamples);r.lweOutcome=e?`Without noise, Gaussian elimination recovers s = [${e.join(`, `)}] exactly.`:`Noiseless system was singular; generate new samples.`,T()}),n.querySelector(`#solve-noisy`)?.addEventListener(`click`,()=>{if(r.lweSamples.length<3){r.lweOutcome=`Generate noisy samples first.`,T();return}let e=l(r.lweSamples.slice(0,3));if(!e){r.lweOutcome=`Noisy system was singular; regenerate samples.`,T();return}let t=r.lweSamples.map(t=>s(u(t.a,e,97)-t.b,97));r.lweOutcome=t.some(e=>e!==0)?`With noise, equations become inconsistent. Candidate s = [${e.join(`, `)}], residuals = [${t.join(`, `)}].`:`This sample happened to fit exactly. Try again; noise usually breaks exact solving.`,T()});let D=n.querySelector(`#param-select`);D?.addEventListener(`change`,()=>{r.selectedParam=D.value,T()}),n.querySelector(`#run-keygen`)?.addEventListener(`click`,()=>{let t=e[r.selectedParam],n=performance.now(),i=f(t.publicKey),a=f(t.privateKey);r.keygenMs=performance.now()-n,r.keygenPreview=p(i,64),r.keygenSkSize=a.length,r.keygenRatio=`${t.label} public key (${t.publicKey} bytes) is ${(t.publicKey/1184).toFixed(1)}x ML-KEM-768.`,T()}),n.querySelector(`#kem-gen`)?.addEventListener(`click`,()=>{r.aliceSeed=f(32),r.kemCiphertext=null,r.kemBobSecret=null,r.kemAliceSecret=null,r.kemEncapMs=0,r.kemDecapMs=0,r.kemStatus=`Alice keypair generated. Bob can encapsulate now.`,T()}),n.querySelector(`#kem-encap`)?.addEventListener(`click`,async()=>{if(!r.aliceSeed){r.kemStatus=`Generate Alice keypair first.`,T();return}let t=e[r.selectedParam],n=performance.now(),i=f(t.ciphertext),a=await m(h(r.aliceSeed,i));r.kemEncapMs=performance.now()-n,r.kemCiphertext=i,r.kemBobSecret=a,r.kemAliceSecret=null,r.kemStatus=`Bob encapsulated using ${t.label}. Ciphertext size = ${t.ciphertext} bytes.`,T()}),n.querySelector(`#kem-decap`)?.addEventListener(`click`,async()=>{if(!r.aliceSeed||!r.kemCiphertext){r.kemStatus=`Encapsulate first.`,T();return}let e=performance.now();r.kemAliceSecret=await m(h(r.aliceSeed,r.kemCiphertext)),r.kemDecapMs=performance.now()-e,r.kemStatus=`Alice decapsulated and derived a shared secret.`,T()}),n.querySelector(`#kem-tamper`)?.addEventListener(`click`,()=>{if(!r.kemCiphertext){r.kemStatus=`No ciphertext to tamper.`,T();return}let e=a(r.kemCiphertext.length);r.kemCiphertext[e]=r.kemCiphertext[e]^1,r.kemStatus=`Tampered ciphertext byte at index ${e}. Next decapsulation should mismatch.`,T()}),n.querySelector(`#run-compare`)?.addEventListener(`click`,()=>{r.compareRows.frodo.keygen=y(26e4),r.compareRows.frodo.encaps=y(22e4),r.compareRows.frodo.decaps=y(23e4),r.compareRows.mlkem.keygen=y(22e3),r.compareRows.mlkem.encaps=y(18e3),r.compareRows.mlkem.decaps=y(19e3),r.compareBench=`Side-by-side operation complete. Frodo path is intentionally heavier than ML-KEM path.`,T()}),n.querySelector(`#sample-errors`)?.addEventListener(`click`,()=>{let t=e[r.selectedParam];r.errorHistogram=S(t),r.errorSummary=`Sampled 1000 errors for ${t.label}. Distribution is centered near 0 with thin tails.`,T()}),n.querySelector(`#run-failure`)?.addEventListener(`click`,()=>{r.failureSummary=C(),T()})}r.lweSamples=d(r.lweSecret,!0),r.lweCleanSamples=d(r.lweSecret,!1),T();
-//# sourceMappingURL=index-6RNJb_fJ.js.map
+//# sourceMappingURL=index-Bu_tIr4H.js.map
