@@ -542,3 +542,83 @@ a:focus-visible {
     height: 1rem;
   }
 }
+
+/* --- Exhibit 7: The Global Divide --- */
+
+.divide-highlight {
+  background: var(--accent-soft);
+}
+
+.divide-highlight td {
+  font-weight: 700;
+  color: var(--ink0);
+}
+
+.timeline {
+  position: relative;
+  margin: 1.2rem 0 0.4rem 1.6rem;
+  padding-left: 1.4rem;
+  border-left: 2px solid var(--line);
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 0.6rem;
+  padding-bottom: 1rem;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.95rem;
+  top: 0.35rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--ink0);
+  border: 2px solid var(--line);
+}
+
+.timeline-year {
+  font: 700 0.85rem var(--mono);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.timeline-text {
+  font-size: 0.92rem;
+  color: var(--ink1);
+}
+
+blockquote footer {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  font-style: normal;
+  color: var(--ink2);
+  font-family: var(--sans);
+}
+
+/* Responsive: stack divide table at narrow widths */
+@media (max-width: 600px) {
+  .divide-table {
+    font-size: 0.82rem;
+  }
+
+  .timeline {
+    margin-left: 0.8rem;
+    padding-left: 1rem;
+  }
+
+  .timeline-item {
+    grid-template-columns: 3rem 1fr;
+    gap: 0.4rem;
+  }
+
+  .timeline-item::before {
+    left: -1.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+}
