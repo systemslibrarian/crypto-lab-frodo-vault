@@ -112,6 +112,7 @@ const state = {
   hybridMlkemSS: null as Uint8Array | null,
   hybridCombinedSS: null as Uint8Array | null,
   hybridStatus: 'Run the hybrid demo to derive a combined shared secret.',
+  openCollapsibles: new Set<string>(),
 };
 
 function randomUint32(): number {
@@ -383,13 +384,16 @@ async function runMatrixAnimation(): Promise<void> {
   const computed: number[] = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < 3; c++) {
+      if (!container.isConnected) { state.matrixAnimRunning = false; return; }
       container.innerHTML = renderMatrix(r, c, computed);
       await new Promise(res => setTimeout(res, 300));
     }
     computed.push(results[r]);
+    if (!container.isConnected) { state.matrixAnimRunning = false; return; }
     container.innerHTML = renderMatrix(r, -1, computed);
     await new Promise(res => setTimeout(res, 400));
   }
+  if (!container.isConnected) { state.matrixAnimRunning = false; return; }
   container.innerHTML = renderMatrix(-1, -1, computed);
   state.matrixAnimHtml = container.innerHTML;
   state.matrixAnimRunning = false;
@@ -481,8 +485,8 @@ function render(): void {
           <p role="status" aria-live="polite">${state.lweOutcome}</p>
         </div>
         <div>
-          <button class="collapsible-toggle" aria-expanded="false" data-collapse="lwe-detail">Ring-LWE vs plain LWE</button>
-          <div class="collapsible-body" id="lwe-detail">
+          <button class="collapsible-toggle" aria-expanded="${state.openCollapsibles.has('lwe-detail')}" data-collapse="lwe-detail">Ring-LWE vs plain LWE</button>
+          <div class="collapsible-body ${state.openCollapsibles.has('lwe-detail') ? 'open' : ''}" id="lwe-detail">
           <ul>
             <li>Plain LWE (FrodoKEM): A is a random n×n matrix, no ring structure.</li>
             <li>Ring/Module-LWE (ML-KEM): structured polynomial algebra gives faster and smaller operations.</li>
@@ -659,8 +663,8 @@ function render(): void {
       </article>
 
       <article class="card decision">
-        <button class="collapsible-toggle" aria-expanded="false" data-collapse="decision-tree">Decision tree</button>
-        <div class="collapsible-body" id="decision-tree">
+        <button class="collapsible-toggle" aria-expanded="${state.openCollapsibles.has('decision-tree')}" data-collapse="decision-tree">Decision tree</button>
+        <div class="collapsible-body ${state.openCollapsibles.has('decision-tree') ? 'open' : ''}" id="decision-tree">
         <p>Post-quantum TLS or general use → <strong>ML-KEM-768</strong>.</p>
         <p>Maximum conservatism and size is acceptable → <strong>FrodoKEM-976</strong>.</p>
         <p>Archive secrecy horizon 20+ years → <strong>FrodoKEM-1344</strong>.</p>
@@ -788,8 +792,8 @@ function render(): void {
           </ul>
         </div>
         <div>
-          <button class="collapsible-toggle" aria-expanded="false" data-collapse="belt-suspenders">Belt-and-suspenders recommendation</button>
-          <div class="collapsible-body" id="belt-suspenders">
+          <button class="collapsible-toggle" aria-expanded="${state.openCollapsibles.has('belt-suspenders')}" data-collapse="belt-suspenders">Belt-and-suspenders recommendation</button>
+          <div class="collapsible-body ${state.openCollapsibles.has('belt-suspenders') ? 'open' : ''}" id="belt-suspenders">
           <p>For most deployments, ML-KEM-768 is enough. For highest assurance, combine ML-KEM-768 + FrodoKEM-976.</p>
           <p>Hybrid secret derivation: <code>SS = KDF(SS_mlkem || SS_frodo)</code>. Security holds if either KEM remains secure.</p>
           <p>20-year horizon framing: FrodoKEM is explicit insurance against uncertain long-term structural risk.</p>
@@ -919,7 +923,12 @@ function render(): void {
       if (!targetId) return;
       const body = appRoot.querySelector(`#${targetId}`);
       if (!body) return;
-      const isOpen = body.classList.contains('open');
+      const isOpen = state.openCollapsibles.has(targetId);
+      if (isOpen) {
+        state.openCollapsibles.delete(targetId);
+      } else {
+        state.openCollapsibles.add(targetId);
+      }
       body.classList.toggle('open');
       toggle.setAttribute('aria-expanded', String(!isOpen));
     });
@@ -959,11 +968,24 @@ function render(): void {
   const noiseSlider = appRoot.querySelector<HTMLInputElement>('#noise-mag');
   noiseSlider?.addEventListener('input', () => {
     state.lweNoiseMag = parseInt(noiseSlider.value, 10);
+    // Update label and hint text without full re-render to keep slider focus
+    const label = noiseSlider.closest('.noise-slider-wrap')?.querySelector('label');
+    if (label) label.innerHTML = `Error magnitude: <strong>${state.lweNoiseMag}</strong>`;
+    const hint = noiseSlider.closest('.noise-slider-wrap')?.querySelector('span:last-child');
+    if (hint) hint.textContent = state.lweNoiseMag === 0 ? 'No noise' : state.lweNoiseMag <= 3 ? 'Small (solvable)' : state.lweNoiseMag <= 12 ? 'Medium (hard)' : 'Large (impossible)';
     if (state.lweSamples.length > 0) {
       state.lweSamples = buildToyLweSamples(state.lweSecret, true, state.lweNoiseMag);
       state.lweOutcome = `Regenerated samples with error magnitude ±${state.lweNoiseMag}.`;
+      // Update just the samples table and outcome text
+      const tbody = appRoot.querySelector('#panel-lwe table tbody');
+      if (tbody) {
+        tbody.innerHTML = state.lweSamples.map(
+          (row, i) => `<tr><td>${i + 1}</td><td>[${row.a.join(', ')}]</td><td>${row.b}</td><td>${row.e}</td></tr>`
+        ).join('');
+      }
+      const outcome = appRoot.querySelector('#panel-lwe [role="status"]');
+      if (outcome) outcome.textContent = state.lweOutcome;
     }
-    render();
   });
 
   const matrixAnimBtn = appRoot.querySelector<HTMLButtonElement>('#run-matrix-anim');
