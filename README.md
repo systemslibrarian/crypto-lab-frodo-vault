@@ -33,14 +33,37 @@ means for the future of post-quantum cryptography.
 
 Link: https://systemslibrarian.github.io/crypto-lab-frodo-vault/
 
-Seven exhibits: the LWE problem from first principles with toy interactive
-demo, FrodoKEM key generation with real parameter sizes visualized, full
-encapsulation and decapsulation with tamper detection, side-by-side
-FrodoKEM vs ML-KEM comparison with decision tree, error distribution
-visualizer with decryption failure demo, FrodoKEM in the full PQ KEM
-landscape with hybrid recommendation, and the global PQC standards divide —
-structureless vs algebraic lattices, China's S-Cloud+, and why even NIST
-hedged with HQC.
+**Seven exhibits:**
+
+1. **LWE Problem** — interactive toy demo (n=3, q=97), adjustable noise slider,
+   animated A·s + e matrix multiplication, Gaussian elimination solver
+2. **Key Generation** — real FrodoKEM parameter sizes, public key bar chart
+   (param-aware), keypair generation timing
+3. **Encap / Decap** — full KEM flow with tamper detection, ciphertext diff
+   viewer highlighting tampered bytes
+4. **Frodo vs ML-KEM** — side-by-side benchmark, decision tree, hybrid KEM
+   walkthrough combining ML-KEM-768 + FrodoKEM-976
+5. **Error Distribution** — histogram of 1000 sampled errors, toy decryption
+   failure demo, failure probability chart showing the error-magnitude cliff
+6. **PQ Landscape** — FrodoKEM in the full post-quantum KEM landscape with
+   cross-demo links and hybrid recommendation
+7. **The Global Divide** — structureless vs algebraic lattices, China's S-Cloud+,
+   NIST's HQC hedge, and FrodoKEM as the bridge
+
+**Interactive features:**
+
+- URL hash routing — link directly to any exhibit (e.g. `#kem`, `#divide`)
+- Keyboard navigation — arrow keys cycle tabs, Home/End jump to first/last
+- Theme toggle — dark/light mode with localStorage persistence
+- Collapsible sections — expandable detail panels that persist across interactions
+- Animated matrix multiplication — step-by-step A·s + e = b mod q visualization
+- Noise magnitude slider — adjust LWE error from 0 to 48).
+- Ciphertext diff viewer — highlights tampered bytes in red after tampering
+- Failure probability chart — bar chart showing the sharp correctness cliff
+- Hybrid KEM walkthrough — derive combined secret from ML-KEM + FrodoKEM
+- Print stylesheet — clean output for PDF/paper
+- Noscript fallback — message for JS-disabled browsers
+- 33 unit tests covering all core math and utility functions
 
 ## 4. How to Run Locally
 
@@ -51,7 +74,17 @@ npm install
 npm run dev
 ```
 
-## 5. Part of the Crypto-Lab Suite
+## 5. Tests
+
+```bash
+npm test
+```
+
+33 tests covering modular arithmetic, LWE sample generation, Gaussian
+elimination solver, failure probabilities, hex formatting, and ciphertext
+diff rendering.
+
+## 6. Part of the Crypto-Lab Suite
 
 Part of [crypto-lab](https://systemslibrarian.github.io/crypto-lab/) —
 browser-based cryptography demos spanning 2,500 years of cryptographic
