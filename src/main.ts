@@ -1,6 +1,6 @@
 import './style.css';
 
-type TabId = 'lwe' | 'keygen' | 'kem' | 'compare' | 'errors' | 'landscape';
+type TabId = 'lwe' | 'keygen' | 'kem' | 'compare' | 'errors' | 'landscape' | 'divide';
 type Theme = 'dark' | 'light';
 type FrodoId = 'frodo640' | 'frodo976' | 'frodo1344';
 
@@ -317,6 +317,7 @@ function render(): void {
       <button class="tab ${state.activeTab === 'compare' ? 'active' : ''}" data-tab="compare" role="tab" id="tab-compare" aria-selected="${state.activeTab === 'compare'}" aria-controls="panel-compare">4. Frodo vs ML-KEM</button>
       <button class="tab ${state.activeTab === 'errors' ? 'active' : ''}" data-tab="errors" role="tab" id="tab-errors" aria-selected="${state.activeTab === 'errors'}" aria-controls="panel-errors">5. Error Distribution</button>
       <button class="tab ${state.activeTab === 'landscape' ? 'active' : ''}" data-tab="landscape" role="tab" id="tab-landscape" aria-selected="${state.activeTab === 'landscape'}" aria-controls="panel-landscape">6. PQ Landscape</button>
+      <button class="tab ${state.activeTab === 'divide' ? 'active' : ''}" data-tab="divide" role="tab" id="tab-divide" aria-selected="${state.activeTab === 'divide'}" aria-controls="panel-divide">7. The Global Divide</button>
     </nav>
 
     <section class="panel ${state.activeTab === 'lwe' ? 'visible' : ''}" id="panel-lwe" role="tabpanel" aria-labelledby="tab-lwe" ${state.activeTab !== 'lwe' ? 'hidden' : ''}>
@@ -617,6 +618,9 @@ function render(): void {
       <article class="card callout">
         <strong>Why this matters:</strong> FrodoKEM is not the default KEM. It is the conservative option for secrets where long-term risk tolerance is near zero.
       </article>
+    </section>
+
+    <section class="panel ${state.activeTab === 'divide' ? 'visible' : ''}" id="panel-divide" role="tabpanel" aria-labelledby="tab-divide" ${state.activeTab !== 'divide' ? 'hidden' : ''}>
     </section>
   </main>
   `;
