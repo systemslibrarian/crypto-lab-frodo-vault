@@ -2,7 +2,7 @@
 
 ## What It Is
 
-FrodoKEM is a post-quantum Key Encapsulation Mechanism (KEM) built on the plain Learning With Errors (LWE) problem — no ring or module structure. Unlike ML-KEM (FIPS 203), which gains speed from structured polynomial arithmetic, FrodoKEM relies only on the most conservative lattice hardness assumption: unstructured LWE, introduced by Regev (2005). This demo provides an interactive browser-based simulation of FrodoKEM's key generation, encapsulation, and decapsulation flows with spec-accurate parameter sizes for all three security levels (640, 976, 1344). It is an educational tool, not a production cryptographic implementation.
+FrodoKEM is a post-quantum Key Encapsulation Mechanism (KEM) built on the plain Learning With Errors (LWE) problem — no ring or module structure. Unlike ML-KEM (FIPS 203), which gains speed from structured polynomial arithmetic, FrodoKEM relies only on the most conservative lattice hardness assumption: unstructured LWE, introduced by Regev (2005). This demo runs **real FrodoKEM** — genuine key generation, encapsulation, and decapsulation from [liboqs](https://github.com/open-quantum-safe/liboqs) (the Open Quantum Safe project), compiled to WebAssembly via [`@oqs/liboqs-js`](https://www.npmjs.com/package/@oqs/liboqs-js) — for all three security levels (640, 976, 1344), plus real ML-KEM-768 for the hybrid walkthrough. Shared secrets match because the LWE math agrees, a tampered ciphertext genuinely fails decapsulation (FrodoKEM's implicit rejection), and the speed comparison is measured live in your browser. It is an educational tool: keys are ephemeral and in-memory — not a key-management system.
 
 ## When to Use It
 
@@ -16,7 +16,9 @@ FrodoKEM is a post-quantum Key Encapsulation Mechanism (KEM) built on the plain 
 
 [https://systemslibrarian.github.io/crypto-lab-frodo-vault/](https://systemslibrarian.github.io/crypto-lab-frodo-vault/)
 
-Seven interactive exhibits: toy LWE problem with adjustable noise and animated matrix multiplication, simulated key generation with a parameter size calculator, encapsulation/decapsulation with tamper detection, FrodoKEM vs ML-KEM comparison with hybrid KEM derivation, error distribution sampling with failure probability visualization, post-quantum KEM landscape overview, and a sourced analysis of the global structured-vs-structureless lattice standards divide.
+Seven interactive exhibits: toy LWE problem with adjustable noise and animated matrix multiplication, real FrodoKEM key generation with a parameter size calculator, real encapsulation/decapsulation with a working tamper-rejection test, FrodoKEM vs ML-KEM comparison with a live in-browser benchmark and a real hybrid KEM derivation, error distribution sampling with failure probability visualization, post-quantum KEM landscape overview, and a sourced analysis of the global structured-vs-structureless lattice standards divide.
+
+Each exhibit is built as a lesson, not just a panel: a stated learning goal up top, predict-before-you-run checkpoints with immediate feedback, a "you should now understand" recall summary at the bottom, a toy-LWE→real-FrodoKEM bridge, a stateful KEM data-flow diagram, a glossary, a common-misconceptions section, and evidence-category labels (published spec / standards decision / public statement / interpretation / unknown) on the geopolitics exhibit.
 
 ## How to Run Locally
 

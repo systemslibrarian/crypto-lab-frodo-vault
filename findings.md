@@ -51,4 +51,10 @@ These are intentionally small for interactive teaching and are fully isolated fr
 
 ## Exhibit Architecture Note
 
-The keygen/encap/decap exhibits are conceptual/symbolic: they generate correctly-sized random byte arrays matching spec sizes and derive shared secrets via SHA-256. They do not implement the full FrodoKEM internal algebra (matrix expansion from SHAKE-128, noise sampling into S/E matrices, etc.). This is appropriate for an interactive educational demo — the exhibits accurately represent the size and structure properties of real FrodoKEM operations.
+**Update (June 27, 2026):** The keygen / encapsulation / decapsulation exhibits now run **real FrodoKEM**, not a simulation. They call genuine liboqs implementations (FrodoKEM-640/976/1344 and ML-KEM-768 for the hybrid) compiled to WebAssembly via `@oqs/liboqs-js`, wrapped in `src/frodo-kem.ts`. Specifically:
+
+- Keys, ciphertexts, and shared secrets are produced by the real LWE algebra (A·S + E, encode/decode, KDF), not random bytes + SHA-256.
+- Alice's and Bob's shared secrets match because the math agrees; the tamper test triggers FrodoKEM's IND-CCA2 implicit rejection, so a flipped ciphertext bit genuinely breaks the round-trip.
+- The Exhibit 4 timing rows are measured live in the browser (median of real WASM runs), replacing the former synthetic "computational weight" loop.
+
+The demo uses the `eFrodoKEM-*-AES` (ephemeral) liboqs variants because their ciphertext sizes (9,720 / 15,744 / 21,632) match the audited figures above exactly; the salted `FrodoKEM-*` variants add 32 bytes of salt per ciphertext. The toy exhibits (Exhibit 1 LWE solver, Exhibit 5 q=17 failure model) remain intentionally small teaching models. Vite needs a small plugin (`vite.config.ts`) to bundle the per-algorithm WASM modules, since liboqs loads them via a dynamic import whose path Rollup cannot otherwise analyze.
