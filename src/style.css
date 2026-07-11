@@ -1459,7 +1459,7 @@ html[data-theme='light'] .misconceptions-panel {
 .ev-spec { background-color: rgba(93, 252, 149, 0.15); color: var(--ok); border: 1px solid rgba(93, 252, 149, 0.35); }
 .ev-decision { background-color: rgba(77, 230, 178, 0.15); color: var(--accent); border: 1px solid rgba(77, 230, 178, 0.35); }
 .ev-statement { background-color: rgba(120, 170, 255, 0.15); color: #8fb4ff; border: 1px solid rgba(120, 170, 255, 0.35); }
-html[data-theme='light'] .ev-statement { background-color: rgba(26, 86, 219, 0.12); color: #1a56db; border-color: rgba(26, 86, 219, 0.4); }
+html[data-theme='light'] .ev-statement { background-color: rgba(5, 80, 174, 0.12); color: #0550ae; border-color: rgba(5, 80, 174, 0.45); }
 .ev-interp { background-color: rgba(255, 211, 106, 0.15); color: var(--warn); border: 1px solid rgba(255, 211, 106, 0.35); }
 .ev-unknown { background-color: rgba(255, 139, 132, 0.15); color: var(--danger); border: 1px solid rgba(255, 139, 132, 0.35); }
 
