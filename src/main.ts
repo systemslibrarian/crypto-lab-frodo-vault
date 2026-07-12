@@ -507,11 +507,17 @@ function render(): void {
 
   appRoot.innerHTML = `
   <main id="main-content" class="shell">
-    <div class="hero-header">
-      <p class="eyebrow">crypto-lab demo</p>
-      <h1>Frodo Vault: FrodoKEM without ring structure</h1>
-      <p class="subhead">Learn why FrodoKEM chooses plain LWE, watch real liboqs FrodoKEM run in your browser, and see the exact cost — in bytes and milliseconds — of avoiding ring structure.</p>
-    </div>
+    <header class="cl-hero">
+      <div class="cl-hero-main">
+        <h1 class="cl-hero-title">Frodo Vault</h1>
+        <p class="cl-hero-sub">FrodoKEM · Plain (unstructured) LWE KEM</p>
+        <p class="cl-hero-desc">Run real liboqs FrodoKEM in your browser and measure — in bytes and milliseconds — the exact cost of building a KEM on plain LWE with no ring or module structure.</p>
+      </div>
+      <aside class="cl-hero-why" aria-label="Why it matters">
+        <span class="cl-hero-why-label">WHY IT MATTERS</span>
+        <p class="cl-hero-why-text">Ring and module lattices give fast, compact keys but rest on extra algebraic structure an attacker might exploit. FrodoKEM drops that structure for a more conservative security bet — the price is far larger keys and slower operations.</p>
+      </aside>
+    </header>
 
     <div class="disclaimer-banner" role="note">
       <strong>Educational demo running real FrodoKEM.</strong> Exhibits 2\u20134 perform genuine FrodoKEM (and ML-KEM-768) operations via liboqs compiled to WebAssembly. It is a learning tool, not a key-management system: keys are ephemeral, in-memory, and never reused \u2014 don't use it to secure real data. <a href="#references">Sources &amp; references \u2192</a>
