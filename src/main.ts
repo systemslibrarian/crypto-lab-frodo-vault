@@ -799,8 +799,9 @@ function render(): void {
             <tr><td>Public key</td><td>15,632 bytes</td><td>1,184 bytes</td></tr>
             <tr><td>Ciphertext</td><td>15,744 bytes</td><td>1,088 bytes</td></tr>
             <tr><td>Shared secret</td><td>24 bytes</td><td>32 bytes</td></tr>
-            <tr><td>Classical security</td><td>~192 bits</td><td>~192 bits</td></tr>
-            <tr><td>PQ security</td><td>~150 bits</td><td>~178 bits</td></tr>
+            <tr><td>NIST security category</td><td>Category 3 (target: ≥ AES-192 key search)</td><td>Category 3 (target: ≥ AES-192 key search)</td></tr>
+            <tr><td>Core-SVP estimate, classical<sup class="cite">&dagger;</sup></td><td>~210 bits</td><td>~181 bits</td></tr>
+            <tr><td>Core-SVP estimate, quantum<sup class="cite">&dagger;</sup></td><td>~191 bits</td><td>~164 bits</td></tr>
             <tr><td>Key generation <span class="sim-notice">measured here</span></td><td>${fmtOp('keygen', 'frodo')}</td><td>${fmtOp('keygen', 'mlkem')}</td></tr>
             <tr><td>Encapsulation <span class="sim-notice">measured here</span></td><td>${fmtOp('encaps', 'frodo')}</td><td>${fmtOp('encaps', 'mlkem')}</td></tr>
             <tr><td>Decapsulation <span class="sim-notice">measured here</span></td><td>${fmtOp('decaps', 'frodo')}</td><td>${fmtOp('decaps', 'mlkem')}</td></tr>
@@ -809,6 +810,7 @@ function render(): void {
             <tr><td>Deployment</td><td>Niche, high-value</td><td>Default PQ KEM</td></tr>
           </tbody>
         </table>
+        <p class="bench-method">&dagger; One convention per row. The security-category row is each scheme's <em>target</em>; the core-SVP rows are each submission team's own estimate of the cost of the best known lattice attack on the underlying LWE/Module-LWE problem (FrodoKEM specification Table 2<sup class="cite"><a href="#ref-4">[4]</a></sup>; CRYSTALS-Kyber specification Table 4). The two teams' cost models are close but not identical, so read the gap as indicative rather than as a precise ranking. FrodoKEM's specification additionally reports a deliberately pessimistic <em>plausible-attack</em> column — 150 bits for FrodoKEM-976 — which prices in speedups nobody has demonstrated; Kyber's specification has no equivalent column, so that 150 must not be compared against the numbers above.</p>
       </article>
 
       <article class="card decision">
@@ -902,7 +904,7 @@ function render(): void {
               <tr><td>ML-KEM-768</td><td>Centered binomial CBD(2) (η₁ = η₂ = 2)</td><td>1.00</td><td>±2</td></tr>
             </tbody>
           </table>
-          <p>FrodoKEM-976 decryption failure target: &lt; 2<sup>-150</sup>.</p>
+          <p>Decryption failure rates from the FrodoKEM specification<sup class="cite"><a href="#ref-4">[4]</a></sup>: FrodoKEM-640 &asymp; 2<sup>-138.7</sup>, FrodoKEM-976 &asymp; 2<sup>-199.6</sup>, FrodoKEM-1344 &asymp; 2<sup>-252.5</sup> — each set deliberately below its own security level, so decryption-failure attacks buy an adversary nothing.</p>
         </div>
       </article>
 
@@ -937,9 +939,9 @@ function render(): void {
             <tbody>
               <tr><td>ML-KEM</td><td>Module-LWE</td><td>FIPS 203 (2024)</td><td>~1KB</td><td>Fast</td></tr>
               <tr><td>FrodoKEM</td><td>Plain LWE</td><td>Round 3 alternate; not advanced to Round 4</td><td>~15KB</td><td>Slower</td></tr>
-              <tr><td>BIKE</td><td>Code-based</td><td>Round 4 alternate</td><td>~1.5KB</td><td>Slow</td></tr>
-              <tr><td>HQC</td><td>Code-based</td><td>Round 4 alternate</td><td>~3KB</td><td>Slow</td></tr>
-              <tr><td>Classic McEliece</td><td>Code-based</td><td>Round 4 alternate</td><td>~261KB</td><td>Slow</td></tr>
+              <tr><td>BIKE</td><td>Code-based</td><td>Round 4 candidate; not selected (NIST IR 8545, 2025)</td><td>~1.5KB</td><td>Slow</td></tr>
+              <tr><td>HQC</td><td>Code-based</td><td>Selected for standardization, March 2025 (NIST IR 8545); FIPS draft pending<sup class="cite"><a href="#ref-5">[5]</a></sup></td><td>~3KB</td><td>Slow</td></tr>
+              <tr><td>Classic McEliece</td><td>Code-based</td><td>Round 4 candidate; not selected by NIST (ISO standardization ongoing)</td><td>~261KB</td><td>Slow</td></tr>
             </tbody>
           </table>
         </div>
@@ -1032,7 +1034,7 @@ function render(): void {
 
       <article class="card">
         <h2>Even NIST Hedged</h2>
-        <p><span class="ev ev-decision">Standards decision</span> In March 2025, NIST selected <strong>HQC</strong> — a code-based algorithm using completely different mathematics (error-correcting codes, not lattices) — as a fourth backup standard<sup class="cite"><a href="#ref-5">[5]</a></sup>. Dustin Moody, NIST's PQC project lead, stated the rationale directly: having a fallback in case ML-KEM proves vulnerable.</p>
+        <p><span class="ev ev-decision">Standards decision</span> In March 2025, NIST selected <strong>HQC</strong> — a code-based algorithm using completely different mathematics (error-correcting codes, not lattices) — as the fifth algorithm to be standardized, and a backup KEM alongside ML-KEM<sup class="cite"><a href="#ref-5">[5]</a></sup>. Dustin Moody, NIST's PQC project lead, stated the rationale directly: having a fallback in case ML-KEM proves vulnerable.</p>
         <p><span class="ev ev-interp">Interpretation</span> This reads as the Western establishment quietly acknowledging what China has said loudly: the algebraic lattice bet might not be safe forever.</p>
         <ul>
           <li><strong>China's approach:</strong> Don't use algebraic lattices to begin with. Use plain LWE (S-Cloud+).</li>

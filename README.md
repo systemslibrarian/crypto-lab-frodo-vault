@@ -31,7 +31,7 @@ Each exhibit is built as a lesson, not just a panel: a stated learning goal up t
 
 ## Real-World Usage
 
-- **Conservative, long-horizon PQC** — FrodoKEM is standardized by ISO/IEC and chosen for high-assurance and government contexts where structured-lattice risk is unacceptable.
+- **Conservative, long-horizon PQC** — FrodoKEM was published as an ISO/IEC standard in June 2026 (ISO/IEC 18033-2:2006/Amd 2:2026) and is chosen for high-assurance and government contexts where structured-lattice risk is unacceptable. NIST did not select it: it was a Round 3 alternate and was not advanced to Round 4.
 - **Hybrid key exchange** — paired with ML-KEM or ECDH so a session stays secure as long as either assumption holds.
 - **Open Quantum Safe / liboqs** — FrodoKEM ships in liboqs and the OQS OpenSSL provider — the same library this demo runs as WebAssembly.
 - **Archival confidentiality** — protecting data whose secrecy must outlast any plausible quantum timeline (harvest-now, decrypt-later).
