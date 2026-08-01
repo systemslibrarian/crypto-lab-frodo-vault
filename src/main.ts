@@ -978,7 +978,7 @@ function render(): void {
       ${renderObjective('divide')}
 
       <article class="card evidence-key">
-        <h3>How to read this exhibit</h3>
+        <h2>How to read this exhibit</h2>
         <p>This is the one exhibit where fact, decision, and interpretation mix. Each claim below is tagged so you can tell them apart:</p>
         <ul class="evidence-legend">
           <li><span class="ev ev-spec">Published spec</span> in a public, peer-reviewable document</li>
@@ -1499,7 +1499,13 @@ function render(): void {
 
   // Scroll active tab into view in the horizontal tab bar
   const activeTabBtn = appRoot.querySelector<HTMLButtonElement>('.tab.active');
-  activeTabBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  // Honour prefers-reduced-motion (WCAG 2.3.3): jump instead of animating.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  activeTabBtn?.scrollIntoView({
+    behavior: reduceMotion ? 'auto' : 'smooth',
+    block: 'nearest',
+    inline: 'nearest',
+  });
 }
 
 window.addEventListener('popstate', () => {

@@ -20,11 +20,6 @@
     <meta name="twitter:description" content="Interactive FrodoKEM demo: plain LWE key encapsulation without ring structure." />
   </head>
   <body>
-<!-- BEGIN crypto-lab shared header — managed; edit shared-header.html + re-run reapply-header.py
-     Identical on every lab. Self-contained styles. Accents use each demo's own
-     --accent CSS variable (teal #35d6bb fallback). The ONLY per-repo value is the
-     repo name (crypto-lab-frodo-vault) in the GitHub link.
-     Source of truth: github.com/systemslibrarian/crypto-lab/shared-header.html -->
 <style>
   .cl-topbar{
     /* The bar is always dark (#0b1512) regardless of page theme, so header
@@ -136,8 +131,7 @@
     else dedupeBanner();
   })();
 </script>
-<!-- END crypto-lab shared header -->
-    <div id="app"></div>
+    <div id="app" tabindex="-1"></div>
     <noscript>
       <div style="max-width:600px;margin:3rem auto;padding:2rem;text-align:center;font-family:system-ui,sans-serif;color:#e0e0e0;background-color:#1e1e2e;border-radius:12px;">
         <h1>Frodo Vault</h1>
