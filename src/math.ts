@@ -17,7 +17,9 @@
 //   - These are intentionally small for interactive pedagogy
 //
 // References:
-//   [1] Regev (2005), STOC. [4] FrodoKEM Specification, frodokem.org
+//   [1] Regev (2005), STOC.
+//   [4] FrodoKEM Specification, 2021-06-04, frodokem.org — Table 1 (parameters),
+//       Table 2 (security bounds; the C/Q/P columns used below).
 // ============================================================================
 
 export type LweSample = {
@@ -28,13 +30,37 @@ export type LweSample = {
 
 export type FrodoId = 'frodo640' | 'frodo976' | 'frodo1344';
 
+// SECURITY FIGURES: one source, one convention.
+// All numbers below come from the FrodoKEM specification (2021-06-04), Table 2
+// "Security bounds" [4]. Its LWE-security columns are labelled C / Q / P — classical,
+// quantum, and plausible — and are core-SVP estimates of the best known lattice attack:
+//
+//   Frodo-640:  target level 1, C=145, Q=132, P=104
+//   Frodo-976:  target level 3, C=210, Q=191, P=150
+//   Frodo-1344: target level 5, C=275, Q=250, P=197
+//
+// Do NOT mix these with NIST security-category targets (AES-128/192/256 key search).
+// The category is what a parameter set *aims at*; the core-SVP figures are what the
+// submission team *estimates*. `nistLevel` records the target separately and is
+// deliberately not expressed in bits, so the two conventions cannot be silently blended.
+//
+// `plausibleAttackBits` is the spec's deliberately pessimistic P column, which prices in
+// speedups nobody has demonstrated. Other submissions (Kyber, for one) publish no
+// equivalent column, so P must never be compared across schemes — compare C with C and
+// Q with Q. This is the same convention the comparison table in main.ts now renders.
 export type FrodoParams = {
   id: FrodoId;
   label: string;
   n: number;
   q: number;
-  classicalBits: number;
-  pqBits: number;
+  /** NIST security-strength category targeted by this set. A target, not a bit count. */
+  nistLevel: 1 | 3 | 5;
+  /** Core-SVP classical estimate, bits. Spec Table 2, column C. */
+  coreSvpClassicalBits: number;
+  /** Core-SVP quantum estimate, bits. Spec Table 2, column Q. */
+  coreSvpQuantumBits: number;
+  /** Core-SVP plausible-attack estimate, bits. Spec Table 2, column P. Not cross-comparable. */
+  plausibleAttackBits: number;
   publicKey: number;
   privateKey: number;
   ciphertext: number;
@@ -48,8 +74,10 @@ export const FRODO: Record<FrodoId, FrodoParams> = {
     label: 'FrodoKEM-640',
     n: 640,
     q: 2 ** 15,
-    classicalBits: 128,
-    pqBits: 103,
+    nistLevel: 1,
+    coreSvpClassicalBits: 145,
+    coreSvpQuantumBits: 132,
+    plausibleAttackBits: 104,
     publicKey: 9616,
     privateKey: 19888,
     ciphertext: 9720,
@@ -61,8 +89,10 @@ export const FRODO: Record<FrodoId, FrodoParams> = {
     label: 'FrodoKEM-976',
     n: 976,
     q: 2 ** 16,
-    classicalBits: 192,
-    pqBits: 150,
+    nistLevel: 3,
+    coreSvpClassicalBits: 210,
+    coreSvpQuantumBits: 191,
+    plausibleAttackBits: 150,
     publicKey: 15632,
     privateKey: 31296,
     ciphertext: 15744,
@@ -74,8 +104,10 @@ export const FRODO: Record<FrodoId, FrodoParams> = {
     label: 'FrodoKEM-1344',
     n: 1344,
     q: 2 ** 16,
-    classicalBits: 256,
-    pqBits: 207,
+    nistLevel: 5,
+    coreSvpClassicalBits: 275,
+    coreSvpQuantumBits: 250,
+    plausibleAttackBits: 197,
     publicKey: 21520,
     privateKey: 43088,
     ciphertext: 21632,

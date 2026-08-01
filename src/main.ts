@@ -656,14 +656,15 @@ function render(): void {
           <div class="table-wrap">
             <table>
               <caption class="sr-only">FrodoKEM parameter sizes</caption>
-              <thead><tr><th scope="col">Set</th><th scope="col">Public key</th><th scope="col">Private key</th><th scope="col">Security</th></tr></thead>
+              <thead><tr><th scope="col">Set</th><th scope="col">Public key</th><th scope="col">Private key</th><th scope="col">NIST target</th><th scope="col">Core-SVP quantum<sup class="cite">&Dagger;</sup></th></tr></thead>
               <tbody>
-                <tr><td>FrodoKEM-640</td><td>9,616 bytes</td><td>19,888 bytes</td><td>~103-bit PQ</td></tr>
-                <tr><td>FrodoKEM-976</td><td>15,632 bytes</td><td>31,296 bytes</td><td>~150-bit PQ</td></tr>
-                <tr><td>FrodoKEM-1344</td><td>21,520 bytes</td><td>43,088 bytes</td><td>~207-bit PQ</td></tr>
+                <tr><td>FrodoKEM-640</td><td>9,616 bytes</td><td>19,888 bytes</td><td>Category 1</td><td>~132 bits</td></tr>
+                <tr><td>FrodoKEM-976</td><td>15,632 bytes</td><td>31,296 bytes</td><td>Category 3</td><td>~191 bits</td></tr>
+                <tr><td>FrodoKEM-1344</td><td>21,520 bytes</td><td>43,088 bytes</td><td>Category 5</td><td>~250 bits</td></tr>
               </tbody>
             </table>
           </div>
+          <p class="bench-method">&Dagger; Two columns, two conventions, kept apart on purpose. The NIST target is the category the parameter set <em>aims at</em>; the core-SVP figure is the FrodoKEM team's own estimate of the cost of the best known lattice attack (specification Table 2<sup class="cite"><a href="#ref-4">[4]</a></sup>, column Q). That table also reports a deliberately pessimistic <em>plausible-attack</em> column — 104, 150 and 197 bits — which prices in speedups nobody has demonstrated. Those are not this column, and because other submissions publish no equivalent they must not be compared across schemes.</p>
           <p>Generated public key preview: <code>${state.keygenPreview || '--'}</code></p>
           <p>Private key size: ${state.keygenSkSize || '--'} bytes</p>
           <p>Generation time: ${state.keygenMs ? `${state.keygenMs.toFixed(3)} ms` : '--'}</p>

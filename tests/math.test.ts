@@ -227,8 +227,34 @@ describe('FRODO params', () => {
     expect(FRODO.frodo976.ciphertext).toBe(15744);
   });
 
-  it('frodo1344 has correct PQ security bits', () => {
-    expect(FRODO.frodo1344.pqBits).toBe(207);
+  // FrodoKEM specification (2021-06-04), Table 2 "Security bounds", columns C / Q / P.
+  it('matches the specification core-SVP estimates', () => {
+    expect(FRODO.frodo640.coreSvpClassicalBits).toBe(145);
+    expect(FRODO.frodo640.coreSvpQuantumBits).toBe(132);
+    expect(FRODO.frodo640.plausibleAttackBits).toBe(104);
+
+    expect(FRODO.frodo976.coreSvpClassicalBits).toBe(210);
+    expect(FRODO.frodo976.coreSvpQuantumBits).toBe(191);
+    expect(FRODO.frodo976.plausibleAttackBits).toBe(150);
+
+    expect(FRODO.frodo1344.coreSvpClassicalBits).toBe(275);
+    expect(FRODO.frodo1344.coreSvpQuantumBits).toBe(250);
+    expect(FRODO.frodo1344.plausibleAttackBits).toBe(197);
+  });
+
+  it('targets NIST categories 1, 3 and 5', () => {
+    expect(FRODO.frodo640.nistLevel).toBe(1);
+    expect(FRODO.frodo976.nistLevel).toBe(3);
+    expect(FRODO.frodo1344.nistLevel).toBe(5);
+  });
+
+  // The two conventions must not be blended: a category target is not a bit count,
+  // and the plausible-attack column is not cross-comparable to other submissions.
+  it('keeps core-SVP estimates ordered classical > quantum > plausible', () => {
+    for (const p of Object.values(FRODO)) {
+      expect(p.coreSvpClassicalBits).toBeGreaterThan(p.coreSvpQuantumBits);
+      expect(p.coreSvpQuantumBits).toBeGreaterThan(p.plausibleAttackBits);
+    }
   });
 
   it('all sets have publicKey > privateKey is false (private > public)', () => {
