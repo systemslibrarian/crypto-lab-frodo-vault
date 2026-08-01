@@ -804,7 +804,7 @@ function render(): void {
             <tr><td>Key generation <span class="sim-notice">measured here</span></td><td>${fmtOp('keygen', 'frodo')}</td><td>${fmtOp('keygen', 'mlkem')}</td></tr>
             <tr><td>Encapsulation <span class="sim-notice">measured here</span></td><td>${fmtOp('encaps', 'frodo')}</td><td>${fmtOp('encaps', 'mlkem')}</td></tr>
             <tr><td>Decapsulation <span class="sim-notice">measured here</span></td><td>${fmtOp('decaps', 'frodo')}</td><td>${fmtOp('decaps', 'mlkem')}</td></tr>
-            <tr><td>NIST status</td><td>Round 4 alternate</td><td>FIPS 203 standard</td></tr>
+            <tr><td>NIST status</td><td>Round 3 alternate; not advanced to Round 4</td><td>FIPS 203 standard</td></tr>
             <tr><td>Ring structure</td><td>None</td><td>Module / ring</td></tr>
             <tr><td>Deployment</td><td>Niche, high-value</td><td>Default PQ KEM</td></tr>
           </tbody>
@@ -899,7 +899,7 @@ function render(): void {
             <tbody>
               <tr><td>FrodoKEM-640</td><td>Discrete, table-sampled</td><td>2.8</td><td>±12</td></tr>
               <tr><td>FrodoKEM-976</td><td>Discrete, table-sampled</td><td>2.3</td><td>±10</td></tr>
-              <tr><td>ML-KEM-768</td><td>Centered binomial CBD(3)</td><td>1.22</td><td>±3</td></tr>
+              <tr><td>ML-KEM-768</td><td>Centered binomial CBD(2) (η₁ = η₂ = 2)</td><td>1.00</td><td>±2</td></tr>
             </tbody>
           </table>
           <p>FrodoKEM-976 decryption failure target: &lt; 2<sup>-150</sup>.</p>
@@ -936,7 +936,7 @@ function render(): void {
             <thead><tr><th scope="col">KEM</th><th scope="col">Basis</th><th scope="col">NIST status</th><th scope="col">Key size</th><th scope="col">Speed</th></tr></thead>
             <tbody>
               <tr><td>ML-KEM</td><td>Module-LWE</td><td>FIPS 203 (2024)</td><td>~1KB</td><td>Fast</td></tr>
-              <tr><td>FrodoKEM</td><td>Plain LWE</td><td>Round 4 alternate</td><td>~15KB</td><td>Slower</td></tr>
+              <tr><td>FrodoKEM</td><td>Plain LWE</td><td>Round 3 alternate; not advanced to Round 4</td><td>~15KB</td><td>Slower</td></tr>
               <tr><td>BIKE</td><td>Code-based</td><td>Round 4 alternate</td><td>~1.5KB</td><td>Slow</td></tr>
               <tr><td>HQC</td><td>Code-based</td><td>Round 4 alternate</td><td>~3KB</td><td>Slow</td></tr>
               <tr><td>Classic McEliece</td><td>Code-based</td><td>Round 4 alternate</td><td>~261KB</td><td>Slow</td></tr>
@@ -1046,7 +1046,7 @@ function render(): void {
         <p>FrodoKEM is not S-Cloud+. But they are philosophical siblings — both plain LWE, both structureless, both accepting the performance cost to gain the cleaner security proof. When China finalizes S-Cloud+ parameters and publishes its specification, the math you have explored in Exhibits 1–5 of this demo is the math that will underlie it. FrodoKEM is the working, publicly specified, NIST-evaluated embodiment of exactly the approach China has chosen as its strategic bet.</p>
         <div class="timeline">
           <div class="timeline-item"><span class="timeline-year">2016</span><span class="timeline-text">FrodoKEM published (Bos et al., Microsoft Research)</span></div>
-          <div class="timeline-item"><span class="timeline-year">2022</span><span class="timeline-text">FrodoKEM eliminated from NIST Round 4 — performance concerns</span></div>
+          <div class="timeline-item"><span class="timeline-year">2022</span><span class="timeline-text">FrodoKEM not advanced past NIST Round 3 — performance concerns</span></div>
           <div class="timeline-item"><span class="timeline-year">2024</span><span class="timeline-text">NIST finalizes ML-KEM (FIPS 203), ML-DSA (FIPS 204), SLH-DSA (FIPS 205)</span></div>
           <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">NIST selects HQC as backup standard (March)</span></div>
           <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">China OSCCA issues global PQC algorithm call (February)</span></div>
