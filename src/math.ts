@@ -251,9 +251,16 @@ export function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
 
 export function renderCtDiff(pre: Uint8Array | null, post: Uint8Array | null, maxBytes = 64): string {
   if (!pre || !post) return '';
+  const commonLength = Math.min(pre.length, post.length);
+  const firstDifference = Array.from({ length: commonLength }, (_, i) => i)
+    .find((i) => pre[i] !== post[i]);
+  const start = firstDifference !== undefined && firstDifference >= maxBytes
+    ? Math.max(0, Math.min(firstDifference - Math.floor(maxBytes / 2), commonLength - maxBytes))
+    : 0;
   const parts: string[] = [];
-  const len = Math.min(pre.length, post.length, maxBytes);
-  for (let i = 0; i < len; i++) {
+  const end = Math.min(commonLength, start + maxBytes);
+  if (start > 0) parts.push(`... [bytes 0–${start - 1}] `);
+  for (let i = start; i < end; i++) {
     const hex = post[i].toString(16).padStart(2, '0');
     if (pre[i] !== post[i]) {
       parts.push(`<span class="tampered">${hex}</span>`);
@@ -261,6 +268,6 @@ export function renderCtDiff(pre: Uint8Array | null, post: Uint8Array | null, ma
       parts.push(hex);
     }
   }
-  if (post.length > maxBytes) parts.push(`... [${post.length - maxBytes} more]`);
+  if (post.length > end) parts.push(` ... [${post.length - end} more]`);
   return parts.join('');
 }

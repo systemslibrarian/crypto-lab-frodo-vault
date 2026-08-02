@@ -212,6 +212,15 @@ describe('renderCtDiff', () => {
     expect(html).toBe('abcd');
     expect(html).not.toContain('tampered');
   });
+
+  it('centers the preview on a tamper beyond the first 64 bytes', () => {
+    const pre = new Uint8Array(256);
+    const post = new Uint8Array(pre);
+    post[200] = 0x01;
+    const html = renderCtDiff(pre, post);
+    expect(html).toContain('bytes 0–');
+    expect(html).toContain('<span class="tampered">01</span>');
+  });
 });
 
 describe('FRODO params', () => {

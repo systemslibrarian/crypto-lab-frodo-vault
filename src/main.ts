@@ -210,7 +210,7 @@ const state = {
   compareStats: null as CompareStats | null,
   errorHistogram: [] as Array<{ value: number; count: number }>,
   errorSummary: 'Sample 1000 errors to visualize FrodoKEM-style discrete distribution.',
-  failureSummary: 'Run the toy decryption-failure demo (n=4, q=17) with oversized errors.',
+  failureSummary: 'Run the scalar toy decryption-failure demo (q=17) with oversized accumulated error.',
   lweNoiseMag: 1,
   failProbs: [] as Array<{ maxErr: number; rate: number }>,
   matrixAnimHtml: '',
@@ -395,7 +395,7 @@ function renderToyRealBridge(): string {
     ['a single random row a', 'a huge n × n matrix A, expanded from a 16-byte seed'],
     ['b = ⟨a, s⟩ + e', 'B = A·S + E mod q'],
     ['solvable by hand', 'a full-size LWE instance — believed quantum-hard'],
-    ['e ∈ {−1, 0, 1}, uniform', 'discrete Gaussian-like errors, table-sampled'],
+    ['default e ∈ {−1, 0, 1}; slider can widen it to ±48', 'discrete Gaussian-like errors, table-sampled'],
   ];
   return `<article class="card">
     <h3>From this toy to real FrodoKEM</h3>
@@ -499,6 +499,9 @@ function renderKemFlow(): string {
 
 function render(): void {
   const params = FRODO[state.selectedParam];
+  const coefficientBits = Math.ceil(Math.log2(params.q));
+  const computedPublicKeyBytes = 16 + (params.n * 8 * coefficientBits) / 8;
+  const publicKeyCheck = computedPublicKeyBytes === params.publicKey ? '✓' : '✗';
   const histMax = Math.max(1, ...state.errorHistogram.map((h) => h.count));
   const kemMatch =
     state.kemAliceSecret && state.kemBobSecret
@@ -543,7 +546,7 @@ function render(): void {
         <p>LWE was introduced by Regev (2005)<sup class="cite"><a href="#ref-1">[1]</a></sup>. Given noisy linear equations over Z<sub>q</sub>, recover secret vector s.</p>
         <p>Formal sample: pick random a ∈ Z<sub>q</sub><sup>n</sup>, compute b = &lt;a, s&gt; + e mod q with small error e. Given many (a,b), recover s.</p>
         <p>Without noise this is linear algebra; with noise, equations become inconsistent and decoding is hard.</p>
-        <blockquote>Educational LWE — toy parameters, not production. Toy interactive demo uses n=3, q=97, and e ∈ {-1, 0, 1}.</blockquote>
+        <blockquote>Educational LWE — toy parameters, not production. The interactive demo uses n=3 and q=97. Its default error is e ∈ {-1, 0, 1}; the learner-controlled slider can widen that range through ±48 to explore when solving collapses.</blockquote>
         <details class="reality-panel">
           <summary>Reality check — this exhibit</summary>
           <div class="reality-content">
@@ -690,7 +693,7 @@ function render(): void {
         <h3>Why are FrodoKEM keys so large?</h3>
         <p>Each key's byte count derives directly from the matrix dimensions<sup class="cite"><a href="#ref-4">[4]</a></sup>:</p>
         <div class="size-calc"><span class="calc-label">pk</span> = seed_A + B matrix = 16 + n × n̄ × ⌈log₂(q)⌉/8
-<span class="calc-label">${params.label}:</span> 16 + ${params.n} × 8 × ${Math.ceil(Math.log2(params.q))}/8 = <span class="calc-result">${params.publicKey.toLocaleString()} bytes ✓</span>
+<span class="calc-label">${params.label}:</span> 16 + ${params.n} × 8 × ${coefficientBits}/8 = <span class="calc-result">${computedPublicKeyBytes.toLocaleString()} bytes ${publicKeyCheck}</span>
 
 <span class="calc-label">sk</span> = s + pk + S matrix + pkh
 <span class="calc-label">${params.label}:</span> ${params.n <= 640 ? 16 : params.n <= 976 ? 24 : 32} + ${params.publicKey.toLocaleString()} + ${params.n} × 8 × 2 + ${params.n <= 640 ? 16 : params.n <= 976 ? 24 : 32} = <span class="calc-result">${params.privateKey.toLocaleString()} bytes ✓</span>
@@ -875,7 +878,7 @@ function render(): void {
           <summary>Reality check — this exhibit</summary>
           <div class="reality-content">
             <div class="reality-row"><span class="reality-badge">✅ Real</span><span>Error sampling uses spec-accurate σ and bounds per parameter set<sup class="cite"><a href="#ref-4">[4]</a></sup>. The discrete Gaussian-like distribution is genuine.</span></div>
-            <div class="reality-row"><span class="reality-badge">⚠️ Simplified</span><span>Toy decryption failure uses q=17 (vs q≥2<sup>15</sup>). Sampling uses floating-point weights, not constant-time CDF table lookup.</span></div>
+            <div class="reality-row"><span class="reality-badge">⚠️ Simplified</span><span>Toy decryption failure is a scalar encode/noise/decode experiment at q=17 (vs matrix operations with q≥2<sup>15</sup>). Sampling uses floating-point weights, not constant-time CDF table lookup.</span></div>
             <div class="reality-row"><span class="reality-badge">🚫 Not guaranteed</span><span>Constant-time execution or side-channel resistance.</span></div>
           </div>
         </details>
