@@ -1186,7 +1186,12 @@ function render(): void {
   randSecret?.addEventListener('click', () => {
     state.lweSecret = [randomFromRange(0, 96), randomFromRange(0, 96), randomFromRange(0, 96)];
     state.lweOutcome = `Secret randomized to [${state.lweSecret.join(', ')}].`;
+    // Both sample sets belong to the OLD secret, so both must go. Clearing only
+    // the noisy set used to leave the noiseless one behind, and "Solve without
+    // noise" would then answer with the previous secret — printing "recovers
+    // s = [old] exactly" while the inputs above it showed the new one.
     state.lweSamples = [];
+    state.lweCleanSamples = [];
     render();
   });
 
