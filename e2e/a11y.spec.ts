@@ -16,10 +16,10 @@ import { expect, test, type Page } from '@playwright/test';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 async function neutralizeMotion(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content:
-      '*, *::before, *::after { animation: none !important; transition: none !important; }',
-  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const matches = await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  expect(matches).toBe(true);
+  await page.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running'));
 }
 
 async function revealAll(page: Page): Promise<void> {
@@ -106,6 +106,7 @@ async function scan(page: Page): Promise<void> {
 }
 
 async function runSuite(page: Page): Promise<void> {
+  await expect(page.locator('h1')).toBeVisible();
   await revealAll(page);
   await neutralizeMotion(page);
   expect(await minimumControlBoundaryRatio(page)).toBeGreaterThanOrEqual(3);
