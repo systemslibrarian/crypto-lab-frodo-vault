@@ -27,6 +27,15 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
+
+      # The vitest suite: FrodoKEM encaps/decaps, the lattice math and the
+      # teaching exhibits — 53 tests across 3 files. Deploy previously ran
+      # only test:a11y, so none of it gated a publish: a build whose KEM no
+      # longer agreed on a shared secret could ship as long as the page
+      # passed axe.
+      - name: Unit tests
+        run: npm test
+
       - run: npm run build
 
       - name: Install Playwright browser
