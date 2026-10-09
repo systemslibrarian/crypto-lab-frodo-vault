@@ -126,6 +126,14 @@ describe('normalPdfLike', () => {
 });
 
 describe('computeFailureProbabilities', () => {
+  it('matches every equally likely message/error outcome of the q=17 model exactly', () => {
+    // Independently enumerate on the circular message alphabet {0,8}.
+    // Failure counts / total outcomes for maxErr1..8 are:
+    // 0/6,0/10,0/14,1/18,5/22,9/26,13/30,17/34.
+    expect(computeFailureProbabilities().map(p => p.rate)).toEqual([
+      0, 0, 0, 1 / 18, 5 / 22, 9 / 26, 13 / 30, 1 / 2,
+    ]);
+  });
   it('returns 8 entries for maxErr 1..8', () => {
     const probs = computeFailureProbabilities();
     expect(probs).toHaveLength(8);

@@ -621,7 +621,7 @@ test('exhibit 5: the toy decryption failure it reports is a real decode failure'
   expect(recovered).not.toBe(message);
 });
 
-test('exhibit 5: the failure-probability chart shows the cliff it describes', async ({ page }) => {
+test('exhibit 5: the chart reports the exact finite toy decoding probabilities', async ({ page }) => {
   await page.goto('.');
   await openTab(page, 'errors');
   await page.click('#run-fail-chart');
@@ -639,6 +639,8 @@ test('exhibit 5: the failure-probability chart shows the cliff it describes', as
 
   expect(rows).toHaveLength(8);
   expect(rows.map((r) => r.maxErr)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  expect(rows.map((r) => r.pct)).toEqual([0, 0, 0, 5.6, 22.7, 34.6, 43.3, 50]);
+  await expect(page.getByText('Exact toy probabilities:', { exact: false })).toContainText('do not estimate FrodoKEM decryption failure');
   for (const r of rows) {
     expect(r.pct).toBeGreaterThanOrEqual(0);
     expect(r.pct).toBeLessThanOrEqual(100);
@@ -649,7 +651,7 @@ test('exhibit 5: the failure-probability chart shows the cliff it describes', as
   // At q=17 with half=8, an error of ±3 can never cross the decision boundary,
   // so these are exactly zero, not merely small.
   for (const r of rows.slice(0, 3)) expect(r.pct, `±${r.maxErr}`).toBe(0);
-  // …and by ±8 decoding is broken. Expectation is ~49% over 500 trials.
+  // At ±8, exactly17 of the34 equally likely toy outcomes fail to decode.
   expect(rows[7].pct).toBeGreaterThan(25);
   expect(rows[7].pct).toBeGreaterThan(rows[3].pct + 10);
 });

@@ -201,33 +201,23 @@ export function normalPdfLike(x: number, sigma: number): number {
   return Math.exp(-(x * x) / (2 * sigma * sigma));
 }
 
-export function computeFailureProbabilities(
-  rng: () => number = () => crypto.getRandomValues(new Uint32Array(1))[0],
-): Array<{ maxErr: number; rate: number }> {
+/** Exact finite toy probabilities for uniform message bits and integer errors. */
+export function computeFailureProbabilities(): Array<{ maxErr: number; rate: number }> {
   const q = 17;
   const half = Math.floor(q / 2);
-  const trials = 500;
   const results: Array<{ maxErr: number; rate: number }> = [];
-
-  function randomInt(maxExclusive: number): number {
-    if (maxExclusive <= 0) return 0;
-    return rng() % maxExclusive;
-  }
-  function randomFromRange(min: number, max: number): number {
-    return min + randomInt(max - min + 1);
-  }
 
   for (let maxErr = 1; maxErr <= 8; maxErr++) {
     let failures = 0;
-    for (let t = 0; t < trials; t++) {
-      const m = randomInt(2);
-      const e = randomFromRange(-maxErr, maxErr);
-      const noisy = mod(m * half + e, q);
-      const d0 = Math.min(mod(noisy, q), mod(-noisy, q));
-      const d1 = Math.min(mod(noisy - half, q), mod(half - noisy, q));
-      if ((d1 < d0 ? 1 : 0) !== m) failures++;
+    for (const m of [0, 1]) {
+      for (let e = -maxErr; e <= maxErr; e++) {
+        const noisy = mod(m * half + e, q);
+        const d0 = Math.min(mod(noisy, q), mod(-noisy, q));
+        const d1 = Math.min(mod(noisy - half, q), mod(half - noisy, q));
+        if ((d1 < d0 ? 1 : 0) !== m) failures++;
+      }
     }
-    results.push({ maxErr, rate: failures / trials });
+    results.push({ maxErr, rate: failures / (2 * (2 * maxErr + 1)) });
   }
   return results;
 }
