@@ -922,7 +922,7 @@ function render(): void {
             return `<div class="fail-row"><span>±${fp.maxErr}</span><div class="fail-track"><div class="fail-fill ${cls}" style="--w:${Math.max(pct, 1)}%;"></div></div><span>${(pct).toFixed(1)}%</span></div>`;
           }).join('')}
         </div>
-        <p>Green = 0% failure, yellow = occasional, red = frequent. The cliff is sharp — small increases in error magnitude cause catastrophic failure rates.</p>
+        <p>Exact toy probabilities: enumerate both equally likely message bits and every equally likely integer error from −maxErr to +maxErr, using circular nearest-message decoding modulo 17 and resolving ties to 0. Green = 0% failure, yellow = occasional, red = frequent. These finite toy probabilities do not estimate FrodoKEM decryption failure.</p>
       </article>` : ''}
 
       <article class="card callout">
