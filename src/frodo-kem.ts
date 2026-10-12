@@ -14,10 +14,10 @@
 //   640:  pk 9616   sk 19888   ct 9720    ss 16
 //   976:  pk 15632  sk 31296   ct 15744   ss 24
 //   1344: pk 21520  sk 43088   ct 21632   ss 32
-// The salted FrodoKEM-* variants are otherwise identical but add 32 bytes of
-// salt to each ciphertext (9752 / 15792 / 21696), which would not match the
-// displayed tables. liboqs is production-grade, but this UI is still a learning
-// tool: keys live only in memory and are never persisted or reused.
+// Reusable FrodoKEM adds 32/48/64-byte salts (640/976/1344) and doubles
+// seedSE to 32/48/64 bytes. eFrodoKEM requires fewer than 256 ciphertexts
+// per public key; the interactive action enforces 255. Benchmark: 14 per key.
+// Keys live only in memory and are never persisted.
 // ============================================================================
 
 import {

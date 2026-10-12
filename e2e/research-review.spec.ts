@@ -1,0 +1,22 @@
+import {test,expect} from '@playwright/test';
+test('Encaps counts real ciphertexts, survives rerender and resets with a new key',async({page})=>{
+ test.setTimeout(120000);
+ await page.goto('./');
+ await page.locator('[data-tab="kem"]').click();
+ await page.locator('#kem-gen').click();
+ await expect(page.locator('#kem-gen')).toBeEnabled({timeout:60000});
+ await page.locator('#kem-encap').click();
+ await expect(page.locator('#kem-encap')).toBeEnabled({timeout:60000});
+ await expect(page.locator('#panel-kem')).toContainText('Used: 1/255');
+ await page.locator('#kem-decap').click();
+ await expect(page.locator('#kem-decap')).toBeEnabled({timeout:60000});
+ await page.locator('#kem-encap').click();
+ await expect(page.locator('#kem-encap')).toBeEnabled({timeout:60000});
+ await expect(page.locator('#panel-kem')).toContainText('Used: 2/255');
+ await page.locator('[data-tab="lwe"]').click();
+ await page.locator('[data-tab="kem"]').click();
+ await expect(page.locator('#panel-kem')).toContainText('Used: 2/255');
+ await page.locator('#kem-gen').click();
+ await expect(page.locator('#kem-gen')).toBeEnabled({timeout:60000});
+ await expect(page.locator('#panel-kem')).toContainText('Used: 0/255');
+});
