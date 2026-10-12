@@ -1,3 +1,4 @@
+import { limitedEncapsulation, ciphertextCount, MAX_CIPHERTEXTS, REUSABLE_PARAMETERS } from './key-use';
 // ============================================================================
 // Frodo Vault — Educational FrodoKEM Demonstration
 // ============================================================================
@@ -523,7 +524,7 @@ function render(): void {
     </header>
 
     <div class="disclaimer-banner" role="note">
-      <strong>Educational demo running real FrodoKEM.</strong> Exhibits 2\u20134 perform genuine FrodoKEM (and ML-KEM-768) operations via liboqs compiled to WebAssembly. It is a learning tool, not a key-management system: keys are ephemeral, in-memory, and never reused \u2014 don't use it to secure real data. <a href="#references">Sources &amp; references \u2192</a>
+      <strong>Educational demo running real FrodoKEM.</strong> Exhibits 2\u20134 perform genuine FrodoKEM (and ML-KEM-768) operations via liboqs compiled to WebAssembly. It is a learning tool, not a key-management system: keys are ephemeral, in-memory, with at most 255 interactive ciphertexts per public key \u2014 don't use it to secure real data. <a href="#references">Sources &amp; references \u2192</a>
     </div>
 
     <nav class="tabs" role="tablist" aria-label="FrodoKEM exhibits">
@@ -713,11 +714,11 @@ function render(): void {
       ${renderObjective('kem')}
       <article class="card">
         <h2>Encapsulation and decapsulation <span class="badge badge-real">Real · liboqs WASM</span></h2>
-        <p>Encapsulation (run for real): sample S′, E′, E″, compute B′ = A·S′ + E′ and V = B·S′ + E″, encode a random message, output ciphertext (B′, C), derive the shared secret via KDF<sup class="cite"><a href="#ref-4">[4]</a></sup>.</p>
+        <p><strong>eFrodoKEM-*-AES, few-ciphertext variant.</strong> This action permits at most 255 ciphertexts per public key, then requires a new keypair. Used: ${state.kemAlicePk ? ciphertextCount(state.kemAlicePk) : 0}/255. Re-rendering does not reset usage. The benchmark uses 14 ciphertexts per fresh key. Reusable salted FrodoKEM adds ${Object.values(REUSABLE_PARAMETERS).map(p => p.saltBytes).join('/')}-byte salts for 640/976/1344 and doubles seedSE from ${Object.values(REUSABLE_PARAMETERS).map(p => p.ephemeralSeedSEBytes).join('/')} to ${Object.values(REUSABLE_PARAMETERS).map(p => p.seedSEBytes).join('/')} bytes. See the <a href="https://frodokem.org/files/FrodoKEM-annex-20230418.pdf">April 18, 2023 rationale</a> and <a href="https://datatracker.ietf.org/doc/draft-longa-cfrg-frodokem/03/">June 22, 2026 draft -03</a> (individual Informational Internet-Draft, not a final standard).</p><p>Encapsulation (run for real): sample S′, E′, E″, compute B′ = A·S′ + E′ and V = B·S′ + E″, encode a random message, output ciphertext (B′, C), derive the shared secret via KDF<sup class="cite"><a href="#ref-4">[4]</a></sup>.</p>
         <p>Decapsulation (run for real): compute W = B′·S, recover the message, re-encapsulate to validate, and derive the same shared secret.</p>
         <div class="controls">
           <button id="kem-gen" ${state.kemBusy ? 'disabled' : ''}>1 · Generate Alice keypair</button>
-          <button id="kem-encap" ${state.kemBusy ? 'disabled' : ''}>2 · Bob encapsulates</button>
+          <button id="kem-encap" ${state.kemBusy || (state.kemAlicePk !== null && ciphertextCount(state.kemAlicePk) >= MAX_CIPHERTEXTS) ? 'disabled' : ''}>2 · Bob encapsulates</button>
           <button id="kem-decap" ${state.kemBusy ? 'disabled' : ''}>3 · Alice decapsulates</button>
           <button id="kem-tamper" ${state.kemBusy ? 'disabled' : ''}>Tamper with ciphertext</button>
         </div>
@@ -1090,7 +1091,7 @@ function render(): void {
         <div class="about-col">
           <h3>✗ This demo is not</h3>
           <ul>
-            <li>A key-management system — keys and shared secrets are ephemeral, kept only in page memory, and never persisted, reused, or exchanged with a real peer</li>
+            <li>A key-management system — keys and shared secrets are ephemeral, kept only in page memory, and never persisted or exchanged with a real peer; the interactive action allows at most 255 ciphertexts per public key</li>
             <li>A replacement for integrating liboqs or PQClean yourself in a real application</li>
             <li>A guarantee of constant-time execution or side-channel resistance in this in-browser context</li>
           </ul>
@@ -1272,7 +1273,18 @@ function render(): void {
 
   const paramSelect = appRoot.querySelector<HTMLSelectElement>('#param-select');
   paramSelect?.addEventListener('change', () => {
+    if (state.kemBusy) { render(); return; }
     state.selectedParam = paramSelect.value as FrodoId;
+    state.kemParamId = null;
+    state.kemAlicePk = null;
+    state.kemAliceSk = null;
+    state.kemCiphertext = null;
+    state.kemBobSecret = null;
+    state.kemAliceSecret = null;
+    state.kemPreTamperCt = null;
+    state.kemEncapMs = 0;
+    state.kemDecapMs = 0;
+    state.kemStatus = 'Parameters changed: generate a fresh Alice keypair.';
     render();
   });
 
@@ -1352,7 +1364,7 @@ function render(): void {
       const kem = await getFrodoKem(id);
       await yieldToPaint();
       const start = performance.now();
-      const { ciphertext, sharedSecret } = kem.encapsulate(state.kemAlicePk!);
+      const { ciphertext, sharedSecret } = limitedEncapsulation(state.kemAlicePk!, () => kem.encapsulate(state.kemAlicePk!));
       state.kemEncapMs = performance.now() - start;
       state.kemCiphertext = ciphertext;
       state.kemBobSecret = sharedSecret;
@@ -1360,7 +1372,7 @@ function render(): void {
       state.kemPreTamperCt = null;
       state.kemStatus = `Bob encapsulated with ${FRODO[id].label}: ciphertext ${ciphertext.length.toLocaleString()} B, shared secret ${sharedSecret.length} B. Now let Alice decapsulate.`;
     } catch {
-      state.kemStatus = 'Encapsulation failed unexpectedly.';
+      state.kemStatus = state.kemAlicePk && ciphertextCount(state.kemAlicePk) >= MAX_CIPHERTEXTS ? 'eFrodoKEM key exhausted: generate a new keypair before ciphertext 256.' : 'Encapsulation failed unexpectedly.';
     } finally {
       state.kemBusy = false;
       render();
