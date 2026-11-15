@@ -717,3 +717,43 @@ test('prediction checkpoints grade the answer and explain either way', async ({ 
     await expect(feedback).toHaveClass(/ok/);
   }
 });
+
+test('the comparison and landscape tables print the figures their sources give', async ({
+  page,
+}) => {
+  await page.goto('.');
+
+  // CRYSTALS-Kyber round-3 specification, Table 4: ML-KEM-768 core-SVP is
+  // 183 bits classical / 166 quantum (not 181 / 164, which no edition gives).
+  await openTab(page, 'compare');
+  await expect(
+    page.locator('#panel-compare tbody tr', { hasText: 'Core-SVP estimate, classical' }),
+  ).toContainText('~183 bits');
+  await expect(
+    page.locator('#panel-compare tbody tr', { hasText: 'Core-SVP estimate, quantum' }),
+  ).toContainText('~166 bits');
+
+  // HQC specification v5.1, Table 9: |ek_KEM| = 2,241 B (HQC-1), 4,514 B
+  // (HQC-3), 7,237 B (HQC-5). The row must name the set it quotes.
+  await openTab(page, 'landscape');
+  const hqc = page.locator('#panel-landscape tbody tr', { hasText: 'Code-based' }).filter({
+    hasText: 'HQC',
+  });
+  await expect(hqc).toContainText('4,514 B (HQC-3)');
+  await expect(hqc).not.toContainText('~3KB');
+});
+
+test('the structureless-bet exhibit credits the published Scloud+ specification', async ({
+  page,
+}) => {
+  await page.goto('.');
+  await openTab(page, 'divide');
+
+  const panel = page.locator('#panel-divide');
+  await expect(panel).toContainText('ePrint 2024/1306');
+  await expect(panel).not.toContainText('no published cryptographic specification');
+
+  // FrodoKEM specification, Algorithms 10 and 13: S′ multiplies on the left.
+  await openTab(page, 'kem');
+  await expect(page.locator('#panel-kem')).toContainText('B′ = S′A + E′ and V = S′B + E″');
+});

@@ -714,7 +714,7 @@ function render(): void {
       ${renderObjective('kem')}
       <article class="card">
         <h2>Encapsulation and decapsulation <span class="badge badge-real">Real · liboqs WASM</span></h2>
-        <p><strong>eFrodoKEM-*-AES, few-ciphertext variant.</strong> This action permits at most 255 ciphertexts per public key, then requires a new keypair. Used: ${state.kemAlicePk ? ciphertextCount(state.kemAlicePk) : 0}/255. Re-rendering does not reset usage. The benchmark uses 14 ciphertexts per fresh key. Reusable salted FrodoKEM adds ${Object.values(REUSABLE_PARAMETERS).map(p => p.saltBytes).join('/')}-byte salts for 640/976/1344 and doubles seedSE from ${Object.values(REUSABLE_PARAMETERS).map(p => p.ephemeralSeedSEBytes).join('/')} to ${Object.values(REUSABLE_PARAMETERS).map(p => p.seedSEBytes).join('/')} bytes. See the <a href="https://frodokem.org/files/FrodoKEM-annex-20230418.pdf">April 18, 2023 rationale</a> and <a href="https://datatracker.ietf.org/doc/draft-longa-cfrg-frodokem/03/">June 22, 2026 draft -03</a> (individual Informational Internet-Draft, not a final standard).</p><p>Encapsulation (run for real): sample S′, E′, E″, compute B′ = A·S′ + E′ and V = B·S′ + E″, encode a random message, output ciphertext (B′, C), derive the shared secret via KDF<sup class="cite"><a href="#ref-4">[4]</a></sup>.</p>
+        <p><strong>eFrodoKEM-*-AES, few-ciphertext variant.</strong> This action permits at most 255 ciphertexts per public key, then requires a new keypair. Used: ${state.kemAlicePk ? ciphertextCount(state.kemAlicePk) : 0}/255. Re-rendering does not reset usage. The benchmark uses 14 ciphertexts per fresh key. Reusable salted FrodoKEM adds ${Object.values(REUSABLE_PARAMETERS).map(p => p.saltBytes).join('/')}-byte salts for 640/976/1344 and doubles seedSE from ${Object.values(REUSABLE_PARAMETERS).map(p => p.ephemeralSeedSEBytes).join('/')} to ${Object.values(REUSABLE_PARAMETERS).map(p => p.seedSEBytes).join('/')} bytes. See the <a href="https://frodokem.org/files/FrodoKEM-annex-20230418.pdf">April 18, 2023 rationale</a> and <a href="https://datatracker.ietf.org/doc/draft-longa-cfrg-frodokem/03/">June 22, 2026 draft -03</a> (individual Informational Internet-Draft, not a final standard).</p><p>Encapsulation (run for real): sample S′, E′, E″, compute B′ = S′A + E′ and V = S′B + E″, encode a random message, output ciphertext (B′, C), derive the shared secret via KDF<sup class="cite"><a href="#ref-4">[4]</a></sup>.</p>
         <p>Decapsulation (run for real): compute W = B′·S, recover the message, re-encapsulate to validate, and derive the same shared secret.</p>
         <div class="controls">
           <button id="kem-gen" ${state.kemBusy ? 'disabled' : ''}>1 · Generate Alice keypair</button>
@@ -805,8 +805,8 @@ function render(): void {
             <tr><td>Ciphertext</td><td>15,744 bytes</td><td>1,088 bytes</td></tr>
             <tr><td>Shared secret</td><td>24 bytes</td><td>32 bytes</td></tr>
             <tr><td>NIST security category</td><td>Category 3 (target: ≥ AES-192 key search)</td><td>Category 3 (target: ≥ AES-192 key search)</td></tr>
-            <tr><td>Core-SVP estimate, classical<sup class="cite">&dagger;</sup></td><td>~210 bits</td><td>~181 bits</td></tr>
-            <tr><td>Core-SVP estimate, quantum<sup class="cite">&dagger;</sup></td><td>~191 bits</td><td>~164 bits</td></tr>
+            <tr><td>Core-SVP estimate, classical<sup class="cite">&dagger;</sup></td><td>~210 bits</td><td>~183 bits</td></tr>
+            <tr><td>Core-SVP estimate, quantum<sup class="cite">&dagger;</sup></td><td>~191 bits</td><td>~166 bits</td></tr>
             <tr><td>Key generation <span class="sim-notice">measured here</span></td><td>${fmtOp('keygen', 'frodo')}</td><td>${fmtOp('keygen', 'mlkem')}</td></tr>
             <tr><td>Encapsulation <span class="sim-notice">measured here</span></td><td>${fmtOp('encaps', 'frodo')}</td><td>${fmtOp('encaps', 'mlkem')}</td></tr>
             <tr><td>Decapsulation <span class="sim-notice">measured here</span></td><td>${fmtOp('decaps', 'frodo')}</td><td>${fmtOp('decaps', 'mlkem')}</td></tr>
@@ -815,7 +815,7 @@ function render(): void {
             <tr><td>Deployment</td><td>Niche, high-value</td><td>Default PQ KEM</td></tr>
           </tbody>
         </table>
-        <p class="bench-method">&dagger; One convention per row. The security-category row is each scheme's <em>target</em>; the core-SVP rows are each submission team's own estimate of the cost of the best known lattice attack on the underlying LWE/Module-LWE problem (FrodoKEM specification Table 2<sup class="cite"><a href="#ref-4">[4]</a></sup>; CRYSTALS-Kyber specification Table 4). The two teams' cost models are close but not identical, so read the gap as indicative rather than as a precise ranking. FrodoKEM's specification additionally reports a deliberately pessimistic <em>plausible-attack</em> column — 150 bits for FrodoKEM-976 — which prices in speedups nobody has demonstrated; Kyber's specification has no equivalent column, so that 150 must not be compared against the numbers above.</p>
+        <p class="bench-method">&dagger; One convention per row. The security-category row is each scheme's <em>target</em>; the core-SVP rows are each submission team's own estimate of the cost of the best known lattice attack on the underlying LWE/Module-LWE problem (FrodoKEM specification Table 2<sup class="cite"><a href="#ref-4">[4]</a></sup>; CRYSTALS-Kyber round-3 specification Table 4). The two teams' cost models are close but not identical, so read the gap as indicative rather than as a precise ranking. FrodoKEM's specification additionally reports a deliberately pessimistic <em>plausible-attack</em> column — 150 bits for FrodoKEM-976 — which prices in speedups nobody has demonstrated; Kyber's specification has no equivalent column, so that 150 must not be compared against the numbers above.</p>
       </article>
 
       <article class="card decision">
@@ -945,7 +945,7 @@ function render(): void {
               <tr><td>ML-KEM</td><td>Module-LWE</td><td>FIPS 203 (2024)</td><td>~1KB</td><td>Fast</td></tr>
               <tr><td>FrodoKEM</td><td>Plain LWE</td><td>Round 3 alternate; not advanced to Round 4</td><td>~15KB</td><td>Slower</td></tr>
               <tr><td>BIKE</td><td>Code-based</td><td>Round 4 candidate; not selected (NIST IR 8545, 2025)</td><td>~1.5KB</td><td>Slow</td></tr>
-              <tr><td>HQC</td><td>Code-based</td><td>Selected for standardization, March 2025 (NIST IR 8545); FIPS draft pending<sup class="cite"><a href="#ref-5">[5]</a></sup></td><td>~3KB</td><td>Slow</td></tr>
+              <tr><td>HQC</td><td>Code-based</td><td>Selected for standardization, March 2025 (NIST IR 8545); FIPS draft pending<sup class="cite"><a href="#ref-5">[5]</a></sup></td><td>4,514 B (HQC-3)</td><td>Slow</td></tr>
               <tr><td>Classic McEliece</td><td>Code-based</td><td>Round 4 candidate; not selected by NIST (ISO standardization ongoing)</td><td>~261KB</td><td>Slow</td></tr>
             </tbody>
           </table>
@@ -969,7 +969,7 @@ function render(): void {
           <p>For most deployments, ML-KEM-768 is enough. For highest assurance, combine ML-KEM-768 + FrodoKEM-976.</p>
           <p>Hybrid secret derivation: <code>SS = KDF(SS_mlkem || SS_frodo)</code>. Security holds if either KEM remains secure.</p>
           <p>20-year horizon framing: FrodoKEM is explicit insurance against uncertain long-term structural risk.</p>
-          <p>Deployment notes: FrodoKEM was originated at Microsoft Research and appears in high-assurance hybrid deployments such as Amazon s2n-tls options.</p>
+          <p>Deployment notes: FrodoKEM was originated at Microsoft Research. It is not part of the mainstream TLS stacks — Amazon's s2n-tls, for instance, documents ML-KEM as the only post-quantum key exchange it supports — so expect to reach for it deliberately rather than find it on by default.</p>
           </div>
         </div>
       </article>
@@ -1015,7 +1015,7 @@ function render(): void {
               <tr><td>Security proof</td><td>Reduction gap exists</td><td>Cleaner worst-case reduction</td></tr>
               <tr class="divide-highlight"><td>Algebraic attack surface</td><td>Present</td><td>Absent</td></tr>
               <tr><td>Standards status</td><td>NIST FIPS 203/204 (2024)</td><td>China target: ~2028–2029</td></tr>
-              <tr><td>Named algorithms</td><td>ML-KEM, ML-DSA, FALCON</td><td>S-Cloud+ (announced)</td></tr>
+              <tr><td>Named algorithms</td><td>ML-KEM, ML-DSA, FALCON</td><td>S-Cloud+ (ePrint 2024/1306)</td></tr>
             </tbody>
           </table>
         </div>
@@ -1025,15 +1025,15 @@ function render(): void {
       <article class="card">
         <h2>S-Cloud+ and the Structureless Bet</h2>
         <div class="caveat-box" role="note">
-          <strong>⚠ No public specification.</strong> <span class="ev ev-unknown">Unknown</span> As of this writing, S-Cloud+ has <em>no published cryptographic specification</em> — parameter sets, key sizes, and security proofs are not public. Everything below about its design is inferred from public remarks, not a peer-reviewed document.
+          <strong>⚠ A published paper, not yet a standard.</strong> <span class="ev ev-spec">Published spec</span> S-Cloud+ <em>does</em> have a published cryptographic specification: Wang et al., "Scloud+: a Lightweight LWE-based KEM without Ring/Module Structure", IACR ePrint 2024/1306, published at SSR 2024<sup class="cite"><a href="#ref-9">[9]</a></sup>. It gives three parameter sets, key and ciphertext sizes, core-SVP security estimates and a decryption-failure analysis; the sibling demo <a href="https://systemslibrarian.github.io/crypto-lab-scloud-vault/" target="_blank" rel="noopener">scloud-vault</a> is built on it. <span class="ev ev-unknown">Unknown</span> What is not public is the <em>standard</em>: no Chinese national standard has been issued, and which design or parameters it will name is still open.
         </div>
         <blockquote>
           <span class="ev ev-statement">Public statement</span>
-          "International standards based on algebraic lattices have some degree of security degradation. But structureless cryptographic algorithms basically do not have this problem."
-          <footer>— Wang Xiaoyun, Tsinghua University, National People's Congress, Beijing, March 2026<sup class="cite"><a href="#ref-8">[8]</a></sup></footer>
+          International standards based on algebraic lattices "have some degree of security degradation," whereas "structureless cryptographic algorithms basically do not have this problem."
+          <footer>— Wang Xiaoyun, Tsinghua University, as reported by Reuters from the National People's Congress, Beijing, 19 March 2026<sup class="cite"><a href="#ref-8">[8]</a></sup></footer>
         </blockquote>
-        <p>China's leading structureless algorithm candidate is S-Cloud+, promoted as the domestic alternative to ML-KEM. <span class="ev ev-interp">Interpretation</span> Its stated design philosophy mirrors FrodoKEM: plain LWE over an integer matrix, no ring structure, no NTT. <span class="ev ev-unknown">Unknown</span> Its parameter sets, key sizes, and exact security proofs are not yet published. What is signalled is the commitment: trade performance for the most conservative possible security foundation.</p>
-        <p><span class="ev ev-decision">Standards decision</span> In February 2025, China's Institute of Commercial Cryptography Standards (OSCCA) issued a global call for post-quantum algorithm proposals<sup class="cite"><a href="#ref-7">[7]</a></sup> — a direct parallel to NIST's 2016 competition, with a distinctly different technical direction baked in. Wang Xiaoyun projected a three-to-five year timeline to domestic standards, with finance and energy sectors first in line for migration.</p>
+        <p>China's leading structureless algorithm candidate is S-Cloud+, promoted as the domestic alternative to ML-KEM. <span class="ev ev-interp">Interpretation</span> Its stated design philosophy mirrors FrodoKEM: plain LWE over an integer matrix, no ring structure, no NTT. <span class="ev ev-unknown">Unknown</span> Its parameter sets, key sizes and security estimates are published (ePrint 2024/1306<sup class="cite"><a href="#ref-9">[9]</a></sup>); which of them a Chinese national standard will adopt is not yet settled. What is signalled is the commitment: trade performance for the most conservative possible security foundation.</p>
+        <p><span class="ev ev-decision">Standards decision</span> On February 5, 2025, China's Institute of Commercial Cryptography Standards (商用密码标准研究院) issued a global call for next-generation commercial cryptographic algorithms — public-key, hash and block-cipher<sup class="cite"><a href="#ref-7">[7]</a></sup> — a direct parallel to NIST's 2016 competition, with a distinctly different technical direction baked in. Wang Xiaoyun projected a three-to-five year timeline to domestic standards, with finance and energy sectors first in line for migration.</p>
         <p>The motivation is not purely mathematical. Every major technological power wants cryptographic independence — the ability to deploy standards it controls, audits, and trusts. China's earlier development of SM2, SM3, and SM4 (classical cryptography standards) and their mandatory domestic use established this pattern. S-Cloud+ is its post-quantum continuation.</p>
       </article>
 
@@ -1050,13 +1050,14 @@ function render(): void {
 
       <article class="card">
         <h2>FrodoKEM as the Bridge</h2>
-        <p>FrodoKEM is not S-Cloud+. But they are philosophical siblings — both plain LWE, both structureless, both accepting the performance cost to gain the cleaner security proof. When China finalizes S-Cloud+ parameters and publishes its specification, the math you have explored in Exhibits 1–5 of this demo is the math that will underlie it. FrodoKEM is the working, publicly specified, NIST-evaluated embodiment of exactly the approach China has chosen as its strategic bet.</p>
+        <p>FrodoKEM is not S-Cloud+. But they are philosophical siblings — both plain LWE, both structureless, both accepting the performance cost to gain the cleaner security proof. The S-Cloud+ specification is already public<sup class="cite"><a href="#ref-9">[9]</a></sup>, and the math you have explored in Exhibits 1–5 of this demo is the math underneath it: plain LWE over an integer matrix, with ternary secrets and Barnes-Wall lattice coding layered on top. FrodoKEM is the working, publicly specified, NIST-evaluated embodiment of exactly the approach China has chosen as its strategic bet.</p>
         <div class="timeline">
           <div class="timeline-item"><span class="timeline-year">2016</span><span class="timeline-text">FrodoKEM published (Bos et al., Microsoft Research)</span></div>
           <div class="timeline-item"><span class="timeline-year">2022</span><span class="timeline-text">FrodoKEM not advanced past NIST Round 3 — performance concerns</span></div>
           <div class="timeline-item"><span class="timeline-year">2024</span><span class="timeline-text">NIST finalizes ML-KEM (FIPS 203), ML-DSA (FIPS 204), SLH-DSA (FIPS 205)</span></div>
+          <div class="timeline-item"><span class="timeline-year">2024</span><span class="timeline-text">S-Cloud+ specification published (ePrint 2024/1306; SSR 2024)</span></div>
           <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">NIST selects HQC as backup standard (March)</span></div>
-          <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">China OSCCA issues global PQC algorithm call (February)</span></div>
+          <div class="timeline-item"><span class="timeline-year">2025</span><span class="timeline-text">China's commercial-cryptography standards institute issues its global call for next-generation algorithms (February)</span></div>
           <div class="timeline-item"><span class="timeline-year">2026</span><span class="timeline-text">Wang Xiaoyun announces S-Cloud+ direction at NPC (March)</span></div>
           <div class="timeline-item"><span class="timeline-year">~2028</span><span class="timeline-text">China domestic PQC standards expected</span></div>
         </div>
@@ -1069,6 +1070,7 @@ function render(): void {
           <li><a href="https://systemslibrarian.github.io/crypto-lab-dilithium-seal/" target="_blank" rel="noopener"><strong>dilithium-seal</strong></a> — ML-DSA structured lattice signatures (FIPS 204)</li>
           <li><a href="https://systemslibrarian.github.io/crypto-lab-bike-vault/" target="_blank" rel="noopener"><strong>bike-vault</strong></a> — BIKE code-based KEM (same mathematical family as HQC, NIST's hedge)</li>
           <li><a href="https://systemslibrarian.github.io/crypto-lab-hqc-vault/" target="_blank" rel="noopener"><strong>hqc-vault</strong></a> — HQC code-based KEM (NIST's actual backup standard)</li>
+          <li><a href="https://systemslibrarian.github.io/crypto-lab-scloud-vault/" target="_blank" rel="noopener"><strong>scloud-vault</strong></a> — Scloud+, the unstructured-LWE KEM of ePrint 2024/1306, with ternary secrets and BW₃₂ lattice coding</li>
         </ul>
       </article>
 
@@ -1116,8 +1118,9 @@ function render(): void {
         <li id="ref-4">Naehrig, M. et al. (2017–2023). "FrodoKEM: Learning With Errors Key Encapsulation." NIST PQC Round 3 Submission &amp; Specification. <a href="https://frodokem.org/" target="_blank" rel="noopener">frodokem.org</a></li>
         <li id="ref-5">NIST (2025). "NIST Selects HQC as Fifth Algorithm for Post-Quantum Cryptography Standardization." Press Release, March 11, 2025. <a href="https://www.nist.gov/news-events/news/2025/03/nist-selects-hqc-fifth-algorithm-post-quantum-cryptography" target="_blank" rel="noopener">nist.gov</a></li>
         <li id="ref-6">Lyubashevsky, V., Peikert, C., Regev, O. (2010). "On Ideal Lattices and Learning with Errors Over Rings." <em>EUROCRYPT 2010</em>, LNCS 6110, pp. 1–23. <a href="https://doi.org/10.1007/978-3-642-13190-5_1" target="_blank" rel="noopener">doi:10.1007/978-3-642-13190-5_1</a></li>
-        <li id="ref-7">OSCCA / TC260 (2025). "Call for Post-Quantum Cryptographic Algorithm Proposals." China Cryptography Standardization Technical Committee, February 2025.</li>
-        <li id="ref-8">Wang Xiaoyun statements on structureless lattice cryptography at the National People's Congress, Beijing, March 2026. Reported by Chinese state media. <em>Note: S-Cloud+ does not yet have a published cryptographic specification as of April 2026; claims about its design are based on public remarks, not a peer-reviewed paper.</em></li>
+        <li id="ref-7">Institute of Commercial Cryptography Standards / 商用密码标准研究院 (2025). "关于开展新一代商用密码算法征集活动的公告" ("Announcement on launching the solicitation of next-generation commercial cryptographic algorithms"), February 5, 2025, issued under the work arrangements of the Cryptography Industry Standardization Technical Committee (密码行业标准化技术委员会). <a href="https://www.niccs.org.cn/symmbzyjy/tzgg/pc/content/1937422988373135360/content_1937422988373135360.html" target="_blank" rel="noopener">niccs.org.cn</a></li>
+        <li id="ref-8">Chen, L. (2026). "China likely to have standards for post-quantum cryptography in 3 years, expert says." <em>Reuters</em>, Beijing, March 19, 2026 — Wang Xiaoyun's remarks on structureless lattice cryptography, made on the sidelines of the National People's Congress; the quotation above is the wire story's translation. <a href="https://www.yahoo.com/news/articles/china-likely-standards-post-quantum-035603345.html" target="_blank" rel="noopener">Reuters wire story</a></li>
+        <li id="ref-9">Wang, A., Zheng, Z., Zhao, C., Qiu, Z., Zeng, G., Yuan, Y., Mu, C., Wang, X. (2024). "Scloud+: a Lightweight LWE-based KEM without Ring/Module Structure." <em>SSR 2024</em>; IACR ePrint 2024/1306 (revised November 30, 2024). <a href="https://eprint.iacr.org/2024/1306" target="_blank" rel="noopener">eprint.iacr.org/2024/1306</a></li>
       </ol>
     </section>
   </main>
@@ -1359,7 +1362,7 @@ function render(): void {
     state.kemStatus = `Bob is encapsulating against Alice's ${FRODO[id].label} public key…`;
     render();
     try {
-      // REAL encapsulation: sample S',E',E"; B' = A·S' + E'; V = B·S' + E";
+      // REAL encapsulation: sample S',E',E"; B' = S'A + E'; V = S'B + E";
       // encode a random μ; ciphertext = (c1, c2); shared secret = KDF(...).
       const kem = await getFrodoKem(id);
       await yieldToPaint();
