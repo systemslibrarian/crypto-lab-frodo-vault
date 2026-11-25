@@ -385,7 +385,10 @@ test('exhibit 3: a tampered ciphertext reaches implicit rejection and says why',
   expect(idx).toBeGreaterThanOrEqual(0);
   expect(idx).toBeLessThan(set.ct);
   expect(tamperText).toContain('implicit rejection');
-  await expect(page.locator('.flow-wire .wire.tampered')).toHaveCount(2);
+  await expect(page.locator('.flow-wire .wire.tampered')).toHaveCount(1);
+  await expect(page.locator('.flow-wire .wire.tampered')).toContainText('ct (tampered)');
+  await expect(page.locator('#panel-kem .status-ok, #panel-kem .status-bad')).toHaveCount(0);
+  await expect(page.locator('.kem-flow')).toHaveAccessibleName(/comparison pending/i);
   await expect(page.locator('.flow-wire')).toContainText('ct (tampered)');
 
   await runAndSettle(page, '#kem-decap');
@@ -423,6 +426,36 @@ test('exhibit 3: a tampered ciphertext reaches implicit rejection and says why',
   await expect(page.locator('.ct-diff .tampered')).toHaveCount(1);
 });
 
+test('restoring the original ciphertext retires the previous result and permits a fresh match', async ({ page }) => {
+  await page.goto('.');
+  await openTab(page, 'kem');
+  await runAndSettle(page, '#kem-gen');
+  await runAndSettle(page, '#kem-encap');
+  // Choose the same display byte for both edits. WASM key generation and encapsulation already completed.
+  await page.evaluate(() => {
+    const random = crypto.getRandomValues.bind(crypto);
+    crypto.getRandomValues = ((array: ArrayBufferView) => {
+      if (array instanceof Uint32Array && array.length === 1) {
+        array[0] = 17;
+        return array;
+      }
+      return random(array);
+    }) as typeof crypto.getRandomValues;
+  });
+  await page.click('#kem-tamper');
+  await runAndSettle(page, '#kem-decap');
+  await expect(page.locator('.kem-flow')).toHaveAccessibleName(/secrets differ/i);
+  await page.click('#kem-tamper');
+  await expect(status(page, 'kem')).toContainText('Restored');
+  await expect(page.locator('#panel-kem .ct-diff, .flow-wire .tampered, #panel-kem .status-bad')).toHaveCount(0);
+  await expect(page.locator('#panel-kem')).toContainText('Alice shared secret: --');
+  await expect(page.locator('#panel-kem')).toContainText('Decapsulation time: --');
+  await expect(page.locator('.kem-flow')).toHaveAccessibleName(/comparison pending/i);
+  await runAndSettle(page, '#kem-decap');
+  await expect(page.locator('.kem-flow')).toHaveAccessibleName(/secrets match/i);
+  await expect(page.locator('#panel-kem .status-ok')).toHaveText('✓ Secrets match');
+});
+
 test('exhibit 3: each step refuses to run out of order and says what is missing', async ({ page }) => {
   await page.goto('.');
   await openTab(page, 'kem');
@@ -433,7 +466,9 @@ test('exhibit 3: each step refuses to run out of order and says what is missing'
   await expect(status(page, 'kem')).toHaveText('Encapsulate first.');
   await page.click('#kem-tamper');
   await expect(status(page, 'kem')).toHaveText('No ciphertext to tamper.');
-  await expect(page.locator('#panel-kem .status-ok, #panel-kem .status-bad')).toHaveText('--');
+  await expect(page.locator('#panel-kem .status-ok, #panel-kem .status-bad')).toHaveCount(0);
+  await expect(page.locator('#panel-kem')).toContainText('Secret comparison pending.');
+  await expect(page.locator('.kem-flow')).toHaveAccessibleName(/No ciphertext yet/i);
 });
 
 test('exhibit 3: FrodoKEM-1344 encapsulates at its own spec sizes', async ({ page }) => {

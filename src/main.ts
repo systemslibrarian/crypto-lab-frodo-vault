@@ -469,15 +469,17 @@ function renderMisconceptions(): string {
 
 // Compact stateful data-flow diagram for the KEM exhibit. Highlights the step
 // just completed so learners can see what crosses the wire and what stays private.
-function renderKemFlow(): string {
+function renderKemFlow(match: boolean | null): string {
   const hasKeys = state.kemAlicePk !== null;
   const hasCt = state.kemCiphertext !== null;
   const hasAlice = state.kemAliceSecret !== null;
   const tampered = state.kemPreTamperCt !== null;
   const step = (on: boolean) => (on ? 'on' : '');
-  const match = hasAlice && state.kemBobSecret ? bytesEqual(state.kemAliceSecret!, state.kemBobSecret) : null;
+  const comparison = match === null
+    ? (hasCt ? 'Secret comparison pending.' : 'No ciphertext yet.')
+    : (match ? 'The shared secrets match.' : 'The shared secrets differ.');
   const wireCls = tampered ? 'wire tampered' : 'wire';
-  return `<div class="kem-flow" role="img" aria-label="KEM data flow: Alice publishes a public key, Bob returns a ciphertext, both derive the same shared secret; only the public key and ciphertext cross the wire.">
+  return `<div class="kem-flow" role="img" aria-label="KEM data flow. Only the public key and ciphertext cross the wire. ${tampered ? "The ciphertext was edited. " : ""}${comparison}">
     <div class="flow-party">
       <div class="flow-role">Alice</div>
       <div class="flow-item ${step(hasKeys)}">holds sk <span class="flow-private">private</span></div>
@@ -485,7 +487,7 @@ function renderKemFlow(): string {
       <div class="flow-item ${step(hasAlice)}">derives SS<sub>A</sub>${match === null ? '' : match ? ' ✓' : ' ✗'}</div>
     </div>
     <div class="flow-wire">
-      <div class="${wireCls}"><span>pk →</span></div>
+      <div class="wire"><span>pk →</span></div>
       <div class="${wireCls}"><span>← ct${tampered ? ' (tampered)' : ''}</span></div>
       <div class="flow-note">only pk &amp; ct cross the wire</div>
     </div>
@@ -506,8 +508,8 @@ function render(): void {
   const histMax = Math.max(1, ...state.errorHistogram.map((h) => h.count));
   const kemMatch =
     state.kemAliceSecret && state.kemBobSecret
-      ? formatHex(state.kemAliceSecret) === formatHex(state.kemBobSecret)
-      : false;
+      ? bytesEqual(state.kemAliceSecret, state.kemBobSecret)
+      : null;
 
   appRoot.innerHTML = `
   <main id="main-content" class="shell">
@@ -723,7 +725,7 @@ function render(): void {
           <button id="kem-tamper" ${state.kemBusy ? 'disabled' : ''}>Tamper with ciphertext</button>
         </div>
         <p role="status" aria-live="polite">${state.kemStatus}</p>
-        ${renderKemFlow()}
+        ${renderKemFlow(kemMatch)}
         ${renderCheckpoint('kem-tamper')}
         <details class="reality-panel">
           <summary>Reality check — this exhibit</summary>
@@ -744,12 +746,8 @@ function render(): void {
           <p>Encapsulation time: ${state.kemEncapMs ? `${state.kemEncapMs.toFixed(3)} ms` : '--'}</p>
           <p>Decapsulation time: ${state.kemDecapMs ? `${state.kemDecapMs.toFixed(3)} ms` : '--'}</p>
           ${state.kemPreTamperCt ? `<div class="ct-diff">${renderCtDiff(state.kemPreTamperCt, state.kemCiphertext)}</div>` : ''}
-          <p class="${kemMatch ? 'status-ok' : 'status-bad'}">${
-            state.kemAliceSecret && state.kemBobSecret
-              ? kemMatch
-                ? '✓ Secrets match'
-                : '✗ Secrets mismatch'
-              : '--'
+          <p class="${kemMatch === null ? '' : kemMatch ? 'status-ok' : 'status-bad'}">${
+            kemMatch === null ? 'Secret comparison pending.' : kemMatch ? '✓ Secrets match' : '✗ Secrets mismatch'
           }</p>
         </div>
         <div>
@@ -1392,6 +1390,8 @@ function render(): void {
     }
     const id = state.kemParamId;
     state.kemBusy = true;
+    state.kemAliceSecret = null;
+    state.kemDecapMs = 0;
     state.kemStatus = `Alice is decapsulating with her ${FRODO[id].label} secret key…`;
     render();
     try {
@@ -1430,7 +1430,14 @@ function render(): void {
     }
     const idx = randomInt(state.kemCiphertext.length);
     state.kemCiphertext[idx] = state.kemCiphertext[idx] ^ 0x01;
-    state.kemStatus = `Flipped one bit of the ciphertext at byte ${idx}. Decapsulate again — FrodoKEM's implicit rejection will yield a different secret.`;
+    state.kemAliceSecret = null;
+    state.kemDecapMs = 0;
+    if (bytesEqual(state.kemCiphertext, state.kemPreTamperCt)) {
+      state.kemPreTamperCt = null;
+      state.kemStatus = 'Restored Bob’s original ciphertext. Decapsulate again to compare the secrets.';
+    } else {
+      state.kemStatus = `Flipped one bit of the ciphertext at byte ${idx}. Decapsulate again to observe implicit rejection.`;
+    }
     render();
   });
 
