@@ -5,7 +5,7 @@ import {
   vecDot,
   solve3x3Mod97,
   buildToyLweSamples,
-  normalPdfLike,
+  sampleErrorWord,
   computeFailureProbabilities,
   formatHex,
   hexPreview,
@@ -109,20 +109,27 @@ describe('buildToyLweSamples', () => {
   });
 });
 
-describe('normalPdfLike', () => {
-  it('peaks at x=0', () => {
-    const peak = normalPdfLike(0, 2.8);
-    expect(peak).toBe(1);
-  });
-
-  it('is symmetric', () => {
-    expect(normalPdfLike(3, 2.8)).toBeCloseTo(normalPdfLike(-3, 2.8), 10);
-  });
-
-  it('decreases away from center', () => {
-    expect(normalPdfLike(0, 2.8)).toBeGreaterThan(normalPdfLike(1, 2.8));
-    expect(normalPdfLike(1, 2.8)).toBeGreaterThan(normalPdfLike(5, 2.8));
-  });
+describe('FrodoKEM error sampling', () => {
+  // Table A.3 gives the mass of zero and of each individual signed value,
+  // independently of the cumulative thresholds used by the implementation.
+  const counts = {
+    frodo640: [9288, 8720, 7216, 5264, 3384, 1918, 958, 422, 164, 56, 17, 4, 1],
+    frodo976: [11278, 10277, 7774, 4882, 2545, 1101, 396, 118, 29, 6, 1],
+    frodo1344: [18286, 14320, 6876, 2023, 364, 40, 2],
+  } as const;
+  for (const id of Object.keys(counts) as (keyof typeof counts)[]) {
+    it(`matches every signed bin over all 65536 input words for ${id}`, () => {
+      const mass = counts[id];
+      const max = mass.length - 1;
+      const bins = Array<number>(2 * max + 1).fill(0);
+      for (let word = 0; word <= 0xffff; word++) {
+        const error = sampleErrorWord(id, word);
+        if ((word & 1) ? error > 0 : error < 0) throw Error('Incorrect sign bit');
+        bins[error + max]++;
+      }
+      expect(bins).toEqual([...mass.slice(1)].reverse().concat([...mass]));
+    });
+  }
 });
 
 describe('computeFailureProbabilities', () => {

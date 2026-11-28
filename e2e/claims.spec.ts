@@ -228,7 +228,7 @@ test('exhibit 2: the size calculator is arithmetically true for all three sets',
     await page.selectOption('#param-select', id);
     const calc = await page.locator('#panel-keygen .size-calc').innerText();
     // Three worked lines, one per key part, each prefixed with the set's label.
-    const lines = calc.split('\n').filter((l) => l.startsWith(`${set.label}:`));
+    const lines = calc.split('\n').filter((l) => l.startsWith(`e${set.label}:`));
     expect(lines, `worked lines for ${set.label}`).toHaveLength(3);
     const [pkLine, skLine, ctLine] = lines;
 
@@ -585,14 +585,15 @@ test('exhibit 4: the hybrid secret really is SHA-256(SS_mlkem ∥ SS_frodo)', as
 test('exhibit 5: the histogram bins account for all 1000 samples', async ({ page }) => {
   await page.goto('.');
 
-  for (const id of ['frodo976', 'frodo640'] as SetId[]) {
+  for (const id of ['frodo976', 'frodo640', 'frodo1344'] as SetId[]) {
     const set = SETS[id];
     await openTab(page, 'keygen');
     await page.selectOption('#param-select', id);
     await openTab(page, 'errors');
+    await expect(page.locator('.histogram .hist-row')).toHaveCount(0);
     await page.click('#sample-errors');
     await expect(status(page, 'errors').first()).toHaveText(
-      `Sampled 1000 errors for ${set.label}. Distribution is centered near 0 with thin tails.`,
+      `Sampled 1000 errors for ${set.label} using its published distribution table.`,
     );
 
     const bins = await page.locator('.histogram .hist-row').evaluateAll((rows) =>
@@ -608,9 +609,6 @@ test('exhibit 5: the histogram bins account for all 1000 samples', async ({ page
     // The parts sum to the whole the summary line claims.
     expect(bins.reduce((t, b) => t + b.count, 0)).toBe(1000);
     for (const b of bins) expect(b.count).toBeGreaterThanOrEqual(0);
-    // "centered near 0": the modal bin is within one step of zero.
-    const peak = bins.reduce((a, b) => (b.count > a.count ? b : a));
-    expect(Math.abs(peak.value)).toBeLessThanOrEqual(1);
     await expect(page.locator('#panel-errors h3').first()).toContainText(set.label);
   }
 });
@@ -791,4 +789,15 @@ test('the structureless-bet exhibit credits the published Scloud+ specification'
   // FrodoKEM specification, Algorithms 10 and 13: S′ multiplies on the left.
   await openTab(page, 'kem');
   await expect(page.locator('#panel-kem')).toContainText('B′ = S′A + E′ and V = S′B + E″');
+});
+
+test('the two ciphertext columns reproduce the ephemeral and salted sizes', async ({ page }) => {
+  await page.goto('.');
+  await openTab(page, 'kem');
+  const table = page.getByRole('table', {name: 'Ciphertext size in bytes, including the salt for the reusable variant'});
+  await expect(table.getByRole('columnheader', {name: 'eFrodoKEM (runs here)'})).toBeVisible();
+  for (const [n, ephemeral, salted] of [[640, '9,720', '9,752'], [976, '15,744', '15,792'], [1344, '21,632', '21,696']]) {
+    const row = table.getByRole('row').filter({has: page.getByRole('rowheader', { name: String(n), exact: true })});
+    await expect(row.getByRole('cell')).toHaveText([`${ephemeral} bytes`, `${salted} bytes`]);
+  }
 });

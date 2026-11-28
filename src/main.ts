@@ -28,7 +28,7 @@ import {
   vecDot,
   solve3x3Mod97,
   buildToyLweSamples,
-  normalPdfLike,
+  sampleErrorWord,
   computeFailureProbabilities,
   formatHex,
   hexPreview,
@@ -210,7 +210,7 @@ const state = {
   compareBusy: false,
   compareStats: null as CompareStats | null,
   errorHistogram: [] as Array<{ value: number; count: number }>,
-  errorSummary: 'Sample 1000 errors to visualize FrodoKEM-style discrete distribution.',
+  errorSummary: 'Sample 1000 errors from the selected parameter set’s discrete distribution.',
   failureSummary: 'Run the scalar toy decryption-failure demo (q=17) with oversized accumulated error.',
   lweNoiseMag: 1,
   failProbs: [] as Array<{ maxErr: number; rate: number }>,
@@ -254,32 +254,14 @@ function yieldToPaint(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function sampleDiscreteError(maxAbs: number, sigma: number): number {
-  const values: number[] = [];
-  const weights: number[] = [];
-  let total = 0;
-  for (let v = -maxAbs; v <= maxAbs; v += 1) {
-    const w = normalPdfLike(v, sigma);
-    values.push(v);
-    weights.push(w);
-    total += w;
-  }
-  const r = (randomUint32() / 0xffffffff) * total;
-  let running = 0;
-  for (let i = 0; i < values.length; i += 1) {
-    running += weights[i];
-    if (r <= running) return values[i];
-  }
-  return 0;
-}
-
 function generateHistogram(param: FrodoParams): Array<{ value: number; count: number }> {
   const map = new Map<number, number>();
   for (let i = -param.maxError; i <= param.maxError; i += 1) {
     map.set(i, 0);
   }
-  for (let i = 0; i < 1000; i += 1) {
-    const sample = sampleDiscreteError(param.maxError, param.sigma);
+  const words = crypto.getRandomValues(new Uint16Array(1000));
+  for (const word of words) {
+    const sample = sampleErrorWord(param.id, word);
     map.set(sample, (map.get(sample) ?? 0) + 1);
   }
   return Array.from(map.entries()).map(([value, count]) => ({ value, count }));
@@ -634,15 +616,15 @@ function render(): void {
     <section class="panel ${state.activeTab === 'keygen' ? 'visible' : ''}" id="panel-keygen" role="tabpanel" aria-labelledby="tab-keygen" ${state.activeTab !== 'keygen' ? 'hidden' : ''}>
       ${renderObjective('keygen')}
       <article class="card">
-        <h2>FrodoKEM key generation <span class="badge badge-real">Real · liboqs WASM</span></h2>
-        <p>Each click runs the genuine flow inside liboqs: seed → expand A (AES/SHAKE), sample S and E from the noise distribution, compute B = A·S + E mod q, publish (seed<sub>A</sub>, B)<sup class="cite"><a href="#ref-4">[4]</a></sup>.</p>
+        <h2>eFrodoKEM key generation <span class="badge badge-real">Real · liboqs WASM</span></h2>
+        <p>This lab runs the few-ciphertext AES variant in liboqs. Each click runs its key generation: seed → expand A (AES/SHAKE), sample S and E from the noise distribution, compute B = A·S + E mod q, publish (seed<sub>A</sub>, B)<sup class="cite"><a href="#ref-4">[4]</a></sup>.</p>
         <p>For FrodoKEM-976, n=976 and n̄=8. A full 976×976 matrix of 16-bit values would be about 1.9MB, so only seed<sub>A</sub> is stored.</p>
         <div class="controls">
           <label for="param-select">Parameter set</label>
           <select id="param-select" ${state.keygenBusy ? 'disabled' : ''}>
-            <option value="frodo640" ${state.selectedParam === 'frodo640' ? 'selected' : ''}>FrodoKEM-640</option>
-            <option value="frodo976" ${state.selectedParam === 'frodo976' ? 'selected' : ''}>FrodoKEM-976</option>
-            <option value="frodo1344" ${state.selectedParam === 'frodo1344' ? 'selected' : ''}>FrodoKEM-1344</option>
+            <option value="frodo640" ${state.selectedParam === 'frodo640' ? 'selected' : ''}>eFrodoKEM-640-AES</option>
+            <option value="frodo976" ${state.selectedParam === 'frodo976' ? 'selected' : ''}>eFrodoKEM-976-AES</option>
+            <option value="frodo1344" ${state.selectedParam === 'frodo1344' ? 'selected' : ''}>eFrodoKEM-1344-AES</option>
           </select>
           <button id="run-keygen" ${state.keygenBusy ? 'disabled' : ''}>${state.keygenBusy ? 'Generating…' : 'Generate keypair'}</button>
         </div>
@@ -696,13 +678,13 @@ function render(): void {
         <h3>Why are FrodoKEM keys so large?</h3>
         <p>Each key's byte count derives directly from the matrix dimensions<sup class="cite"><a href="#ref-4">[4]</a></sup>:</p>
         <div class="size-calc"><span class="calc-label">pk</span> = seed_A + B matrix = 16 + n × n̄ × ⌈log₂(q)⌉/8
-<span class="calc-label">${params.label}:</span> 16 + ${params.n} × 8 × ${coefficientBits}/8 = <span class="calc-result">${computedPublicKeyBytes.toLocaleString()} bytes ${publicKeyCheck}</span>
+<span class="calc-label">e${params.label}:</span> 16 + ${params.n} × 8 × ${coefficientBits}/8 = <span class="calc-result">${computedPublicKeyBytes.toLocaleString()} bytes ${publicKeyCheck}</span>
 
 <span class="calc-label">sk</span> = s + pk + S matrix + pkh
-<span class="calc-label">${params.label}:</span> ${params.n <= 640 ? 16 : params.n <= 976 ? 24 : 32} + ${params.publicKey.toLocaleString()} + ${params.n} × 8 × 2 + ${params.n <= 640 ? 16 : params.n <= 976 ? 24 : 32} = <span class="calc-result">${params.privateKey.toLocaleString()} bytes ✓</span>
+<span class="calc-label">e${params.label}:</span> ${params.n <= 640 ? 16 : params.n <= 976 ? 24 : 32} + ${params.publicKey.toLocaleString()} + ${params.n} × 8 × 2 + ${params.n <= 640 ? 16 : params.n <= 976 ? 24 : 32} = <span class="calc-result">${params.privateKey.toLocaleString()} bytes ✓</span>
 
 <span class="calc-label">ct</span> = c1 + c2 = (n̄ × n × D/8) + (n̄ × n̄ × D/8)
-<span class="calc-label">${params.label}:</span> ${(8 * params.n * Math.ceil(Math.log2(params.q)) / 8).toLocaleString()} + ${(8 * 8 * Math.ceil(Math.log2(params.q)) / 8).toLocaleString()} = <span class="calc-result">${params.ciphertext.toLocaleString()} bytes ✓</span></div>
+<span class="calc-label">e${params.label}:</span> ${(8 * params.n * Math.ceil(Math.log2(params.q)) / 8).toLocaleString()} + ${(8 * 8 * Math.ceil(Math.log2(params.q)) / 8).toLocaleString()} = <span class="calc-result">${params.ciphertext.toLocaleString()} bytes ✓</span></div>
       </article>
 
       <article class="card callout">
@@ -751,14 +733,12 @@ function render(): void {
           }</p>
         </div>
         <div>
-          <h3>Real ciphertext sizes</h3>
+          <h3>Ciphertext sizes by variant</h3>
           <table>
-            <caption class="sr-only">FrodoKEM ciphertext sizes</caption>
-            <thead><tr><th scope="col">Parameter set</th><th scope="col">Ciphertext</th></tr></thead>
+            <caption class="sr-only">Ciphertext size in bytes, including the salt for the reusable variant</caption>
+            <thead><tr><th scope="col">Dimension</th><th scope="col">eFrodoKEM (runs here)</th><th scope="col">FrodoKEM (reusable, salted)</th></tr></thead>
             <tbody>
-              <tr><td>FrodoKEM-640</td><td>9,720 bytes</td></tr>
-              <tr><td>FrodoKEM-976</td><td>15,744 bytes</td></tr>
-              <tr><td>FrodoKEM-1344</td><td>21,632 bytes</td></tr>
+              ${Object.values(FRODO).map(p => `<tr><th scope="row">${p.n}</th><td>${p.ciphertext.toLocaleString('en-US')} bytes</td><td>${(p.ciphertext + REUSABLE_PARAMETERS[p.id].saltBytes).toLocaleString('en-US')} bytes</td></tr>`).join('')}
             </tbody>
           </table>
           <p>ML-KEM-768 ciphertext: 1,088 bytes.</p>
@@ -793,9 +773,9 @@ function render(): void {
 
       <article class="card table-wrap">
         <table>
-          <caption class="sr-only">FrodoKEM-976 vs ML-KEM-768 comparison</caption>
+          <caption class="sr-only">eFrodoKEM-976-AES vs ML-KEM-768 comparison</caption>
           <thead>
-            <tr><th scope="col">Property</th><th scope="col">FrodoKEM-976</th><th scope="col">ML-KEM-768</th></tr>
+            <tr><th scope="col">Property</th><th scope="col">eFrodoKEM-976-AES</th><th scope="col">ML-KEM-768</th></tr>
           </thead>
           <tbody>
             <tr><td>Hardness assumption</td><td>Plain LWE</td><td>Module-LWE (ring)</td></tr>
@@ -863,7 +843,7 @@ function render(): void {
     <section class="panel ${state.activeTab === 'errors' ? 'visible' : ''}" id="panel-errors" role="tabpanel" aria-labelledby="tab-errors" ${state.activeTab !== 'errors' ? 'hidden' : ''}>
       ${renderObjective('errors')}
       <article class="card">
-        <h2>Error distribution: where security lives <span class="badge badge-real">Real sampling</span></h2>
+        <h2>Error distribution: where security lives <span class="badge badge-real">Table sampling</span></h2>
         <p>FrodoKEM uses discrete table-sampled errors approximating Gaussian behavior<sup class="cite"><a href="#ref-4">[4]</a></sup>. Errors must be random enough for security and small enough for correctness.</p>
         <div class="controls">
           <button id="sample-errors">Sample 1000 errors</button>
@@ -876,8 +856,8 @@ function render(): void {
         <details class="reality-panel">
           <summary>Reality check — this exhibit</summary>
           <div class="reality-content">
-            <div class="reality-row"><span class="reality-badge">✅ Real</span><span>Error sampling uses spec-accurate σ and bounds per parameter set<sup class="cite"><a href="#ref-4">[4]</a></sup>. The discrete Gaussian-like distribution is genuine.</span></div>
-            <div class="reality-row"><span class="reality-badge">⚠️ Simplified</span><span>Toy decryption failure is a scalar encode/noise/decode experiment at q=17 (vs matrix operations with q≥2<sup>15</sup>). Sampling uses floating-point weights, not constant-time CDF table lookup.</span></div>
+            <div class="reality-row"><span class="reality-badge">✅ Real</span><span>Each sampled error uses a random 16-bit word. Its low bit supplies the sign and its upper 15 bits select the magnitude using the published thresholds. <a href="https://frodokem.org/files/FrodoKEM_standard_proposal_20250929.pdf">FrodoKEM §7.5 and Table A.4</a>.</span></div>
+            <div class="reality-row"><span class="reality-badge">⚠️ Simplified</span><span>Toy decryption failure is a scalar encode/noise/decode experiment at q=17 (vs matrix operations with q≥2<sup>15</sup>).</span></div>
             <div class="reality-row"><span class="reality-badge">🚫 Not guaranteed</span><span>Constant-time execution or side-channel resistance.</span></div>
           </div>
         </details>
@@ -1275,6 +1255,10 @@ function render(): void {
   const paramSelect = appRoot.querySelector<HTMLSelectElement>('#param-select');
   paramSelect?.addEventListener('change', () => {
     if (state.kemBusy) { render(); return; }
+    if (state.selectedParam !== paramSelect.value) {
+      state.errorHistogram = [];
+      state.errorSummary = 'Parameters changed. Sample 1000 errors for the selected distribution.';
+    }
     state.selectedParam = paramSelect.value as FrodoId;
     state.kemParamId = null;
     state.kemAlicePk = null;
@@ -1514,7 +1498,7 @@ function render(): void {
   sampleErrors?.addEventListener('click', () => {
     const p = FRODO[state.selectedParam];
     state.errorHistogram = generateHistogram(p);
-    state.errorSummary = `Sampled 1000 errors for ${p.label}. Distribution is centered near 0 with thin tails.`;
+    state.errorSummary = `Sampled 1000 errors for ${p.label} using its published distribution table.`;
     render();
   });
 

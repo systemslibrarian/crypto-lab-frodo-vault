@@ -9,7 +9,7 @@
 //     FrodoKEM-1344: n=1344, q=2^16, pk=21520B, sk=43088B, ct=21632B, σ=1.4
 //   - Modular arithmetic (mod, modInv, vecDot) is genuine
 //   - Gaussian elimination (solve3x3Mod97) is real linear algebra over Z_97
-//   - Error distribution sampling (normalPdfLike) uses spec-accurate σ
+//   - Error sampling maps one 16-bit word through its parameter set’s cumulative distribution table
 //
 // WHAT IS EDUCATIONAL / TOY SCALE:
 //   - buildToyLweSamples: n=3, q=97 (vs production n≥640, q≥2^15)
@@ -197,8 +197,24 @@ export function buildToyLweSamples(
   return samples;
 }
 
-export function normalPdfLike(x: number, sigma: number): number {
-  return Math.exp(-(x * x) / (2 * sigma * sigma));
+// FrodoKEM, 2025-09-29 proposal, §7.5 and Table A.4. The final 32767
+// sentinel in each published table is never compared by the sampling algorithm.
+const ERROR_THRESHOLDS: Record<FrodoId, readonly number[]> = {
+  frodo640: [4643, 13363, 20579, 25843, 29227, 31145, 32103, 32525, 32689, 32745, 32762, 32766],
+  frodo976: [5638, 15915, 23689, 28571, 31116, 32217, 32613, 32731, 32760, 32766],
+  frodo1344: [9142, 23462, 30338, 32361, 32725, 32765],
+};
+
+export function sampleErrorWord(id: FrodoId, word: number): number {
+  if (!Number.isInteger(word) || word < 0 || word > 0xffff) {
+    throw new RangeError('Expected an unsigned 16-bit word');
+  }
+  const draw = word >>> 1;
+  let magnitude = 0;
+  for (const threshold of ERROR_THRESHOLDS[id]) {
+    if (draw > threshold) magnitude++;
+  }
+  return magnitude && (word & 1) ? -magnitude : magnitude;
 }
 
 /** Exact finite toy probabilities for uniform message bits and integer errors. */

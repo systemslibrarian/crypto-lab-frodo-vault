@@ -21,6 +21,10 @@ In the encapsulation exhibit, Bob’s secret belongs to the ciphertext he sent. 
 
 Seven interactive exhibits: toy LWE problem with adjustable noise and animated matrix multiplication, real FrodoKEM key generation with a parameter size calculator, real encapsulation/decapsulation with a working tamper-rejection test, FrodoKEM vs ML-KEM comparison with a live in-browser benchmark and a real hybrid KEM derivation, error distribution sampling with failure probability visualization, post-quantum KEM landscape overview, and a sourced analysis of the global structured-vs-structureless lattice standards divide.
 
+The live engine uses the few-ciphertext eFrodoKEM-AES variants. At dimensions 640, 976 and 1344 their ciphertexts are 9,720, 15,744 and 21,632 bytes. The reusable salted variants produce 9,752, 15,792 and 21,696 bytes.
+
+The histogram draws one random 16-bit word per error and applies the distribution table for the selected parameter set. Across all 65,536 possible words, each signed bin has the mass in Table A.3. [FrodoKEM specification, §7.5 and Annex A](https://frodokem.org/files/FrodoKEM_standard_proposal_20250929.pdf)
+
 The q=17 toy failure chart exhaustively counts both equally likely message bits and every equally likely integer error in the selected range. It shows exact finite probabilities, with nearest-message decoding on the circle and ties resolved to 0. It does not estimate real FrodoKEM failure rates. Unit and browser tests check independently enumerated outcome counts and the displayed percentages.
 
 Each exhibit is built as a lesson, not just a panel: a stated learning goal up top, predict-before-you-run checkpoints with immediate feedback, a "you should now understand" recall summary at the bottom, a toy-LWE→real-FrodoKEM bridge, a stateful KEM data-flow diagram, a glossary, a common-misconceptions section, and evidence-category labels (published spec / standards decision / public statement / interpretation / unknown) on the geopolitics exhibit.
